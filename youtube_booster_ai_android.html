@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15161c">
+<title>YouTube Booster AI</title>
+<style>
+:root{--bg:#101116;--panel:#1b1d25;--panel2:#242631;--line:#343744;--text:#f5f6fa;--muted:#aeb2c0;--red:#e53935;--gold:#ffc857;--green:#5bd39a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Arial}
+header{padding:22px 16px 18px;background:linear-gradient(125deg,#38191b,#171923 70%);border-bottom:1px solid var(--line)}
+.wrap{max-width:1050px;margin:auto;padding:16px}h1{font-size:24px;margin:0 0 5px}h2{font-size:18px;margin:0 0 13px}h3{font-size:16px;margin:0}p{color:var(--muted);margin:5px 0;line-height:1.45}
+.topline{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;display:grid;place-items:center;background:var(--red);border-radius:14px;font-size:24px}
+nav{display:flex;gap:8px;overflow:auto;padding:12px 0 2px}.tab{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;white-space:nowrap;cursor:pointer}.tab.active{background:var(--red);border-color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.stat,.panel,.item{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px}.stat strong{display:block;font-size:26px}.stat span{font-size:12px;color:var(--muted)}
+label{display:block;color:var(--muted);font-size:13px;margin:9px 0 5px}input,textarea,select{width:100%;background:#101116;border:1px solid #3b3e4b;border-radius:9px;color:var(--text);padding:11px;font:inherit}textarea{min-height:85px;resize:vertical}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.full{grid-column:1/-1}button,.btn{display:inline-block;background:var(--red);color:white;border:0;border-radius:9px;padding:11px 13px;font-weight:700;text-decoration:none;cursor:pointer;font-size:14px}.secondary{background:#303340}.gold{background:var(--gold);color:#1b1b1b}.green{background:#1c6348}.danger{background:#632d32}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.items{display:grid;gap:10px}.itemtop{display:flex;justify-content:space-between;gap:8px;align-items:start}.pill{font-size:11px;border:1px solid #626779;border-radius:99px;padding:4px 8px;color:var(--gold);white-space:nowrap}.small{font-size:12px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.filters{display:flex;gap:8px;flex-wrap:wrap}.filters select{max-width:220px}.notice{padding:11px;border-radius:10px;background:#2d2f39;margin:12px 0;color:var(--gold)}.hidden{display:none!important}.empty{padding:18px;text-align:center;color:var(--muted)}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+textarea#generated{min-height:155px}.helper{border-left:3px solid var(--gold);padding:8px 10px;background:#24232a;border-radius:0 8px 8px 0;font-size:13px;color:#e6e2d8}
+@media(min-width:760px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.items{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.itemtop{display:block}.pill{display:inline-block;margin-top:7px}.wrap{padding:12px}}
+</style></head>
+<body>
+<header><div class="wrap">
+<div class="topline"><div class="logo">▶</div><div><h1>YouTube Booster AI</h1><p>Planeje melhor. Publique com estratégia. Cresça com dados.</p></div></div>
+<nav><button class="tab active" data-tab="painel">Painel</button><button class="tab" data-tab="conteudos">Conteúdos</button><button class="tab" data-tab="criar">Criar publicação</button><button class="tab" data-tab="estrategia">Estratégia</button><button class="tab" data-tab="backup">Backup</button></nav>
+</div></header>
+<main class="wrap">
+<div id="notice" class="notice hidden"></div>
+<section id="painel">
+<div class="grid">
+<div class="stat"><strong id="total">0</strong><span>Conteúdos planejados</span></div>
+<div class="stat"><strong id="pending">0</strong><span>Aguardando aprovação</span></div>
+<div class="stat"><strong id="views">0</strong><span>Visualizações registradas</span></div>
+<div class="stat"><strong id="subs">0</strong><span>Inscritos atribuídos</span></div>
+</div>
+<div class="panel"><div class="section-head"><h2>Próximas publicações</h2><button onclick="showTab('criar')">＋ Adicionar</button></div><div id="nextitems" class="items"></div></div>
+<div class="panel"><h2>Fluxo recomendado</h2><div class="helper">1. Cadastre a ideia → 2. Prepare título e descrição → 3. Revise e aprove → 4. Publique no YouTube → 5. Registre os resultados para comparar.</div></div>
+</section>
+<section id="conteudos" class="hidden">
+<div class="panel"><div class="section-head"><h2>Biblioteca de conteúdos</h2><button onclick="showTab('criar')">＋ Novo</button></div>
+<div class="filters"><select id="filterStatus" onchange="render()"><option value="">Todos os status</option><option>Ideia</option><option>Rascunho</option><option>Aguardando aprovação</option><option>Aprovado</option><option>Publicado</option></select>
+<select id="filterType" onchange="render()"><option value="">Todos os formatos</option><option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option></select></div></div>
+<div id="allitems" class="items"></div>
+</section>
+<section id="criar" class="hidden">
+<div class="panel"><h2 id="formtitle">Cadastrar conteúdo</h2>
+<form id="contentForm"><input type="hidden" id="editId">
+<div class="formgrid">
+<div class="full"><label>Título ou ideia *</label><input id="title" required placeholder="Ex.: Acertei o alvo a mais de 660 metros!"></div>
+<div><label>Formato</label><select id="type"><option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option></select></div>
+<div><label>Status</label><select id="status"><option>Ideia</option><option>Rascunho</option><option>Aguardando aprovação</option><option>Aprovado</option><option>Publicado</option></select></div>
+<div class="full"><label>Data e hora planejadas</label><input id="planned" type="datetime-local"></div>
+<div class="full"><label>Descrição / chamada para ação</label><textarea id="description" placeholder="Explique o momento e convide o público a se inscrever ou assistir à próxima live."></textarea></div>
+<div class="full"><label>Hashtags</label><input id="hashtags" placeholder="#GhostReconWildlands #Shorts #Games"></div>
+<div class="full"><label>Link do YouTube (quando publicado)</label><input id="url" type="url" placeholder="https://youtube.com/..."></div>
+<div class="full"><label>Notas de edição / gancho inicial</label><textarea id="notes" placeholder="O que acontece nos primeiros 3 segundos? Ideia para thumbnail?"></textarea></div>
+<div class="full row"><button type="submit">Salvar conteúdo</button><button type="button" class="secondary" onclick="resetForm()">Limpar formulário</button></div>
+</div></form></div>
+<div class="panel"><h2>Gerador rápido de texto</h2><p>Gera uma sugestão inicial para você revisar. Não usa IA externa nem acessa seu canal.</p>
+<label>Tema do vídeo</label><input id="genTopic" placeholder="Ex.: infiltração em uma base de San Mateo">
+<label>Formato</label><select id="genType"><option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option></select>
+<div class="actions"><button onclick="generateText()">Gerar título e descrição</button><button class="secondary" onclick="copyGenerated()">Copiar texto</button></div>
+<label>Texto gerado</label><textarea id="generated" placeholder="Sua sugestão aparecerá aqui..."></textarea></div>
+</section>
+<section id="estrategia" class="hidden">
+<div class="panel"><h2>Plano simples para Ghost Recon Wildlands</h2>
+<div class="items">
+<div class="item"><h3>Shorts: chamar atenção</h3><p>Comece direto com o tiro, erro, explosão ou descoberta. Corte introduções longas e use legenda legível.</p><p class="small">Teste 15–35 segundos como ponto de partida, sem tratar duração como regra fixa.</p></div>
+<div class="item"><h3>Vídeos: entregar uma história</h3><p>Mostre o objetivo logo no início, corte deslocamentos sem ação e crie progressão até o momento principal.</p></div>
+<div class="item"><h3>Lives: criar um motivo para voltar</h3><p>Defina uma missão e um objetivo claros no título. Depois da live, escolha momentos que funcionem sem depender de conhecer toda a transmissão.</p></div>
+<div class="item"><h3>Revisão semanal</h3><p>Compare impressões, taxa de cliques, retenção, visualizações e inscritos ganhos. Compare formatos semelhantes; não julgue apenas por uma publicação.</p></div>
+</div></div>
+<div class="panel"><h2>Checklist antes de publicar</h2><label><input type="checkbox"> O começo entrega o momento prometido?</label><label><input type="checkbox"> O título corresponde ao que realmente acontece?</label><label><input type="checkbox"> A thumbnail é legível em tela pequena?</label><label><input type="checkbox"> A descrição convida a assistir ou se inscrever sem exagerar?</label><label><input type="checkbox"> Revisei áudio, cortes, legendas e direitos de uso?</label></div>
+</section>
+<section id="backup" class="hidden">
+<div class="panel"><h2>Seus dados e backup</h2><p>Os dados são guardados neste navegador, neste aparelho. Exporte regularmente para não perder seus registros.</p>
+<div class="actions"><button onclick="exportData()">Exportar backup JSON</button><button class="secondary" onclick="document.getElementById('importFile').click()">Importar backup</button><button class="secondary" onclick="exportCSV()">Exportar CSV</button><input class="hidden" type="file" id="importFile" accept=".json,application/json" onchange="importData(event)"></div>
+<p class="small">Dica: após importar ou exportar, guarde o arquivo numa pasta fácil de encontrar.</p>
+<div class="notice">Esta versão funciona sem Termux e sem conta. Ainda não se conecta ao YouTube, não busca métricas automaticamente e não publica por você.</div></div>
+</section>
+</main>
+<script>
+const KEY='youtube_booster_ai_v1';
+let contents=[];
+function load(){try{contents=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(contents))contents=[]}catch(e){contents=[]}
+if(!contents.length){contents=[{id:Date.now(),title:'Acertei o alvo a mais de 660 metros!',type:'Short',status:'Ideia',planned:'',description:'Um tiro de sniper impressionante em Ghost Recon Wildlands. Assista até o final e acompanhe as próximas missões no canal.',hashtags:'#GhostReconWildlands #Shorts #Games',url:'',notes:'Começar com o momento do disparo; evitar introdução longa.',views:0,subs:0,created:new Date().toISOString()}];save()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(contents))}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function showNotice(s){let n=document.getElementById('notice');n.textContent=s;n.classList.remove('hidden');setTimeout(()=>n.classList.add('hidden'),2800)}
+function showTab(id){document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!==id));document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='criar'&&!document.getElementById('editId').value)document.getElementById('title').focus();render()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+function card(c){return `<article class="item"><div class="itemtop"><h3>${esc(c.title)}</h3><span class="pill">${esc(c.status)}</span></div><p class="small">${esc(c.type)}${c.planned?' · '+esc(c.planned.replace('T',' ')):''}</p>${c.description?`<p>${esc(c.description)}</p>`:''}${c.hashtags?`<p class="small">${esc(c.hashtags)}</p>`:''}${c.url?`<p><a href="${esc(c.url)}" target="_blank" rel="noopener">Abrir vídeo</a></p>`:''}${c.notes?`<p class="small">Notas: ${esc(c.notes)}</p>`:''}<p class="small">Visualizações: ${Number(c.views)||0} · Inscritos atribuídos: ${Number(c.subs)||0}</p><div class="actions"><button class="gold" onclick="editItem(${c.id})">Editar</button>${c.status!=='Publicado'?`<button class="secondary" onclick="setStatus(${c.id},'Aguardando aprovação')">Enviar para aprovação</button><button class="green" onclick="setStatus(${c.id},'Aprovado')">Aprovar</button>`:''}${c.status!=='Publicado'?`<button class="secondary" onclick="setStatus(${c.id},'Publicado')">Marcar publicado</button>`:''}<button class="danger" onclick="deleteItem(${c.id})">Excluir</button></div><div class="formgrid"><div><label>Status</label><select onchange="setStatus(${c.id},this.value)">${['Ideia','Rascunho','Aguardando aprovação','Aprovado','Publicado'].map(s=>`<option ${c.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Visualizações</label><input type="number" min="0" value="${Number(c.views)||0}" onchange="metric(${c.id},'views',this.value)"></div><div><label>Inscritos atribuídos</label><input type="number" min="0" value="${Number(c.subs)||0}" onchange="metric(${c.id},'subs',this.value)"></div></div></article>`}
+function render(){document.getElementById('total').textContent=contents.length;document.getElementById('pending').textContent=contents.filter(c=>c.status==='Aguardando aprovação').length;document.getElementById('views').textContent=contents.reduce((a,c)=>a+(Number(c.views)||0),0).toLocaleString('pt-BR');document.getElementById('subs').textContent=contents.reduce((a,c)=>a+(Number(c.subs)||0),0).toLocaleString('pt-BR');
+let sorted=[...contents].sort((a,b)=>(a.planned||'9999').localeCompare(b.planned||'9999'));document.getElementById('nextitems').innerHTML=sorted.slice(0,4).map(card).join('')||'<div class="empty">Nenhum conteúdo cadastrado.</div>';
+let st=document.getElementById('filterStatus')?.value||'',ty=document.getElementById('filterType')?.value||'';let filtered=sorted.filter(c=>(!st||c.status===st)&&(!ty||c.type===ty));document.getElementById('allitems').innerHTML=filtered.map(card).join('')||'<div class="panel empty">Nenhum conteúdo corresponde ao filtro.</div>'}
+function resetForm(){document.getElementById('contentForm').reset();document.getElementById('editId').value='';document.getElementById('formtitle').textContent='Cadastrar conteúdo'}
+document.getElementById('contentForm').addEventListener('submit',e=>{e.preventDefault();let id=document.getElementById('editId').value;let old=contents.find(c=>String(c.id)===String(id));let c={id:id?Number(id):Date.now(),title:document.getElementById('title').value.trim(),type:document.getElementById('type').value,status:document.getElementById('status').value,planned:document.getElementById('planned').value,description:document.getElementById('description').value.trim(),hashtags:document.getElementById('hashtags').value.trim(),url:document.getElementById('url').value.trim(),notes:document.getElementById('notes').value.trim(),views:old?.views||0,subs:old?.subs||0,created:old?.created||new Date().toISOString()};if(!c.title)return;if(id)contents=contents.map(x=>x.id===Number(id)?c:x);else contents.unshift(c);save();resetForm();render();showNotice('Conteúdo salvo neste aparelho.');showTab('conteudos')});
+function editItem(id){let c=contents.find(x=>x.id===id);if(!c)return;showTab('criar');document.getElementById('editId').value=c.id;for(let [k,id2] of Object.entries({title:'title',type:'type',status:'status',planned:'planned',description:'description',hashtags:'hashtags',url:'url',notes:'notes'}))document.getElementById(id2).value=c[k]||'';document.getElementById('formtitle').textContent='Editar conteúdo'}
+function setStatus(id,s){let c=contents.find(x=>x.id===id);if(c){c.status=s;save();render();showNotice('Status atualizado: '+s)}}
+function metric(id,k,v){let c=contents.find(x=>x.id===id);if(c){c[k]=Math.max(0,parseInt(v||'0',10)||0);save();render()}}
+function deleteItem(id){if(confirm('Excluir este conteúdo?')){contents=contents.filter(c=>c.id!==id);save();render();showNotice('Conteúdo excluído.')}}
+function generateText(){let topic=document.getElementById('genTopic').value.trim()||'uma missão intensa em Ghost Recon Wildlands';let type=document.getElementById('genType').value;let title,desc;if(type==='Short'){title='🔥 '+(topic.toLowerCase().includes('660')?'ACERTEI O ALVO A MAIS DE 660 METROS!':'VOCÊ NÃO VAI ACREDITAR NESTE MOMENTO!');desc=`O momento mais intenso de ${topic} em Ghost Recon Wildlands! 🎯\\n\\nAssista até o final e comente: você teria feito diferente?\\nAcompanhe o canal para mais missões e Shorts.\\n\\n#GhostReconWildlands #Shorts #Games`}else if(type==='Live'){title='🔴 AO VIVO: '+topic.toUpperCase();desc=`Vamos encarar ${topic} em Ghost Recon Wildlands! Entre na live, participe do chat e acompanhe a missão.\\n\\nInscreva-se para não perder as próximas transmissões.\\n\\n#GhostReconWildlands #AoVivo #Gameplay`}else if(type==='Post de divulgação'){title='🎮 NOVO CONTEÚDO NO YOUTUBE!';desc=`Quer ver ${topic}? Estou levando a missão completa para o YouTube! Acesse meu canal, acompanhe a gameplay e participe da tropa.\\n\\n#GhostReconWildlands #Gameplay #YouTube`}else{title='🎯 '+topic.toUpperCase()+' | GHOST RECON WILDLANDS';desc=`Hoje a missão é ${topic}. Veja os momentos decisivos, a estratégia e o resultado final em Ghost Recon Wildlands.\\n\\nComente sua parte favorita e inscreva-se para acompanhar as próximas operações.\\n\\n#GhostReconWildlands #Gameplay #Games`}document.getElementById('generated').value=title+'\\n\\n'+desc;showNotice('Sugestão gerada. Revise antes de usar.')}
+async function copyGenerated(){let v=document.getElementById('generated').value;if(!v){showNotice('Gere um texto primeiro.');return}try{await navigator.clipboard.writeText(v);showNotice('Texto copiado.')}catch(e){document.getElementById('generated').select();showNotice('Selecione e copie o texto manualmente.')}}
+function download(name,content,type){let blob=new Blob([content],{type}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportData(){download('youtube-booster-backup.json',JSON.stringify(contents,null,2),'application/json')}
+function importData(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d))throw Error();if(confirm('Substituir os conteúdos atuais pelo backup?')){contents=d;save();render();showNotice('Backup importado.')}}catch(e){showNotice('Arquivo de backup inválido.')}ev.target.value=''};r.readAsText(f)}
+function exportCSV(){let cols=['title','type','status','planned','description','hashtags','url','views','subs','notes'];let csv=[cols.join(';'),...contents.map(c=>cols.map(k=>'"'+String(c[k]??'').replace(/"/g,'""')+'"').join(';'))].join('\r\n');download('youtube-booster-conteudos.csv','\ufeff'+csv,'text/csv;charset=utf-8')}
+load();render();
+</script></body></html>
