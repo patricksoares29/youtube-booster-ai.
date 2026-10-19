@@ -105,4 +105,21 @@ function exportData(){download('youtube-booster-backup.json',JSON.stringify(cont
 function importData(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d))throw Error();if(confirm('Substituir os conteúdos atuais pelo backup?')){contents=d;save();render();showNotice('Backup importado.')}}catch(e){showNotice('Arquivo de backup inválido.')}ev.target.value=''};r.readAsText(f)}
 function exportCSV(){let cols=['title','type','status','planned','description','hashtags','url','views','subs','notes'];let csv=[cols.join(';'),...contents.map(c=>cols.map(k=>'"'+String(c[k]??'').replace(/"/g,'""')+'"').join(';'))].join('\r\n');download('youtube-booster-conteudos.csv','\ufeff'+csv,'text/csv;charset=utf-8')}
 load();render();
-</script></body></html>
+</script>
+
+<script>
+const API_YOUTUBE_BOOSTER = "https://youtube-booster-ai.onrender.com";
+
+async function testarServidor() {
+  try {
+    const resposta = await fetch(API_YOUTUBE_BOOSTER + "/");
+    const dados = await resposta.json();
+    console.log("Servidor:", dados);
+  } catch (erro) {
+    console.error("Erro ao acessar servidor:", erro);
+  }
+}
+
+testarServidor();
+</script>
+</body></html>
