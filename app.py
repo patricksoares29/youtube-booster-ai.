@@ -1,6 +1,5 @@
 
 import os
-import json
 import time
 import secrets
 from urllib.parse import urlencode
@@ -13,7 +12,6 @@ from flask_cors import CORS
 
 
 app = Flask(__name__)
-
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 app.config.update(
@@ -70,8 +68,8 @@ def garantir_tabela():
 
 def salvar_tokens(connection_id, tokens):
     garantir_tabela()
-
     conn = conectar_banco()
+
     try:
         with conn.cursor() as cur:
             cur.execute(
@@ -98,8 +96,8 @@ def buscar_tokens(connection_id):
         return None
 
     garantir_tabela()
-
     conn = conectar_banco()
+
     try:
         with conn.cursor() as cur:
             cur.execute(
@@ -123,13 +121,10 @@ def obter_tokens_validos(connection_id):
     if not tokens:
         return None
 
-    expiracao = tokens.get("expires_at", 0)
-
-    if expiracao > time.time() + 60:
+    if tokens.get("expires_at", 0) > time.time() + 60:
         return tokens
 
     refresh_token = tokens.get("refresh_token")
-
     if not refresh_token:
         return None
 
@@ -146,7 +141,7 @@ def obter_tokens_validos(connection_id):
 
     if not response.ok:
         app.logger.error(
-            "Não foi possível renovar o token OAuth: HTTP %s",
+            "Falha ao renovar token OAuth: HTTP %s",
             response.status_code,
         )
         return None
@@ -164,25 +159,19 @@ def obter_tokens_validos(connection_id):
 def consultar_canal(access_token):
     response = requests.get(
         "https://www.googleapis.com/youtube/v3/channels",
-        params={
-            "part": "snippet,statistics",
-            "mine": "true",
-        },
-        headers={
-            "Authorization": f"Bearer {access_token}",
-        },
+        params={"part": "snippet,statistics", "mine": "true"},
+        headers={"Authorization": f"Bearer {access_token}"},
         timeout=30,
     )
 
     if not response.ok:
         app.logger.error(
-            "Consulta ao YouTube falhou: HTTP %s",
+            "Consulta ao canal falhou: HTTP %s",
             response.status_code,
         )
         return None, response.status_code
 
     canais = response.json().get("items", [])
-
     if not canais:
         return None, 404
 
@@ -190,18 +179,11 @@ def consultar_canal(access_token):
 
 
 def consultar_videos(access_token, max_results=20):
-    """Busca vídeos recentes e suas estatísticas."""
-
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     response = requests.get(
         "https://www.googleapis.com/youtube/v3/channels",
-        params={
-            "part": "contentDetails",
-            "mine": "true",
-        },
+        params={"part": "contentDetails", "mine": "true"},
         headers=headers,
         timeout=30,
     )
@@ -214,7 +196,6 @@ def consultar_videos(access_token, max_results=20):
         return None, response.status_code
 
     canais = response.json().get("items", [])
-
     if not canais:
         return [], 200
 
@@ -224,7 +205,6 @@ def consultar_videos(access_token, max_results=20):
         .get("relatedPlaylists", {})
         .get("uploads")
     )
-
     if not uploads_id:
         return [], 200
 
@@ -241,13 +221,12 @@ def consultar_videos(access_token, max_results=20):
 
     if not response.ok:
         app.logger.error(
-            "Falha ao buscar vídeos: HTTP %s",
+            "Falha ao listar vídeos: HTTP %s",
             response.status_code,
         )
         return None, response.status_code
 
     itens = response.json().get("items", [])
-
     ids = [
         item.get("contentDetails", {}).get("videoId")
         for item in itens
@@ -269,7 +248,7 @@ def consultar_videos(access_token, max_results=20):
 
     if not response.ok:
         app.logger.error(
-            "Falha ao buscar estatísticas: HTTP %s",
+            "Falha ao consultar estatísticas: HTTP %s",
             response.status_code,
         )
         return None, response.status_code
@@ -280,11 +259,9 @@ def consultar_videos(access_token, max_results=20):
     }
 
     videos = []
-
     for item in itens:
         video_id = item.get("contentDetails", {}).get("videoId")
         video = videos_api.get(video_id)
-
         if not video:
             continue
 
@@ -296,9 +273,7 @@ def consultar_videos(access_token, max_results=20):
             "id": video_id,
             "titulo": snippet.get("title", ""),
             "publicado_em": snippet.get("publishedAt", ""),
-            "url": (
-                f"https://www.youtube.com/watch?v={video_id}"
-            ),
+            "url": f"https://www.youtube.com/watch?v={video_id}",
             "miniatura": (
                 snippet.get("thumbnails", {})
                 .get("medium", {})
@@ -318,6 +293,7 @@ def consultar_videos(access_token, max_results=20):
 
     return videos, 200
 
+
 @app.route("/")
 def home():
     return jsonify({
@@ -327,6 +303,7 @@ def home():
             "Conexão com o YouTube",
             "Leitura de dados do canal",
             "Armazenamento de tokens no PostgreSQL",
+            "Consulta de vídeos e estatísticas",
             "Preparação de publicações",
         ],
     })
@@ -374,7 +351,6 @@ def oauth_callback():
         }), 400
 
     code = request.args.get("code")
-
     if not code:
         return jsonify({
             "erro": "Código de autorização ausente."
@@ -404,7 +380,6 @@ def oauth_callback():
 
         tokens = response.json()
         access_token = tokens.get("access_token")
-
         if not access_token:
             return jsonify({
                 "erro": "O Google não forneceu um token de acesso."
@@ -415,7 +390,6 @@ def oauth_callback():
         )
 
         channel, status = consultar_canal(access_token)
-
         if channel is None:
             return jsonify({
                 "erro": "Não foi possível consultar o canal do YouTube."
@@ -456,7 +430,6 @@ def dados_canal():
 
     try:
         tokens = obter_tokens_validos(connection_id)
-
         if not tokens:
             return jsonify({
                 "erro": "Conecte novamente sua conta do YouTube.",
@@ -464,14 +437,12 @@ def dados_canal():
             }), 401
 
         channel, status = consultar_canal(tokens["access_token"])
-
         if channel is None:
             return jsonify({
                 "erro": "Não foi possível consultar o canal."
             }), status
 
         session["youtube_connected"] = True
-
         return jsonify({
             "canal": channel["snippet"]["title"],
             "estatisticas": channel.get("statistics", {}),
@@ -496,7 +467,6 @@ def dados_videos():
 
     try:
         tokens = obter_tokens_validos(connection_id)
-
         if not tokens:
             return jsonify({
                 "erro": "Conecte novamente sua conta do YouTube.",
@@ -534,49 +504,6 @@ def dados_videos():
             "erro": "Não foi possível acessar a conexão salva."
         }), 503
 
-@app.route("/api/videos")
-def dados_videos():
-    connection_id = session.get("connection_id")
-
-    try:
-        tokens = obter_tokens_validos(connection_id)
-
-        if not tokens:
-            return jsonify({
-                "erro": "Conecte novamente sua conta do YouTube.",
-                "login": "/login",
-            }), 401
-
-        videos, status = consultar_videos(
-            tokens["access_token"],
-            max_results=20,
-        )
-
-        if videos is None:
-            return jsonify({
-                "erro": "Não foi possível consultar os vídeos."
-            }), status
-
-        return jsonify({
-            "quantidade": len(videos),
-            "videos": videos,
-        })
-
-    except requests.RequestException:
-        app.logger.exception(
-            "Falha de comunicação ao consultar os vídeos"
-        )
-        return jsonify({
-            "erro": "Falha de comunicação com o YouTube."
-        }), 502
-
-    except (psycopg2.Error, RuntimeError):
-        app.logger.exception(
-            "Falha ao recuperar tokens para consultar vídeos"
-        )
-        return jsonify({
-            "erro": "Não foi possível acessar a conexão salva."
-        }), 503
 
 @app.route("/api/status-conexao")
 def status_conexao():
@@ -584,7 +511,6 @@ def status_conexao():
 
     try:
         tokens = buscar_tokens(connection_id)
-
         return jsonify({
             "sessao_ativa": bool(connection_id),
             "token_disponivel": bool(tokens),
@@ -638,4 +564,3 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 10000)),
     )
-
