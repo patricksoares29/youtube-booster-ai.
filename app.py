@@ -1,26 +1,57 @@
 
 import os
+import json
+import time
 import secrets
 from urllib.parse import urlencode
 
 import requests
-import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import Json
 from flask import Flask, jsonify, redirect, request, session
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="None",
+)
+
+CORS(
+    app,
+    origins=["https://patricksoares29.github.io"],
+    supports_credentials=True,
+)
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.readonly"
+]
+
 
 def conectar_banco():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
-    return psycopg2.connect(DATABASE_URL)
+
+    return psycopg2.connect(
+        DATABASE_URL,
+        connect_timeout=10,
+        sslmode="require",
+    )
 
 
-def inicializar_banco():
-    with conectar_banco() as conn:
+def garantir_tabela():
+    conn = conectar_banco()
+    try:
         with conn.cursor() as cur:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS youtube_tokens (
@@ -29,30 +60,133 @@ def inicializar_banco():
                     criado_em TIMESTAMPTZ DEFAULT NOW()
                 )
             """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
+def salvar_tokens(connection_id, tokens):
+    garantir_tabela()
+
+    conn = conectar_banco()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO youtube_tokens (connection_id, tokens)
+                VALUES (%s, %s)
+                ON CONFLICT (connection_id)
+                DO UPDATE SET
+                    tokens = EXCLUDED.tokens,
+                    criado_em = NOW()
+                """,
+                (connection_id, Json(tokens)),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
-from flask_cors import CORS
+def buscar_tokens(connection_id):
+    if not connection_id:
+        return None
 
-CORS(
-    app,
-    origins=["https://patricksoares29.github.io"],
-    supports_credentials=True
-)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+    garantir_tabela()
 
-CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+    conn = conectar_banco()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT tokens
+                FROM youtube_tokens
+                WHERE connection_id = %s
+                """,
+                (connection_id,),
+            )
+            row = cur.fetchone()
 
-# Tokens mantidos apenas na memória do servidor.
-# Uma reinicialização exige nova autorização.
-TOKENS = {}
+        return row[0] if row else None
+    finally:
+        conn.close()
 
-SCOPES = [
-    "https://www.googleapis.com/auth/youtube.readonly"
-]
+
+def obter_tokens_validos(connection_id):
+    tokens = buscar_tokens(connection_id)
+
+    if not tokens:
+        return None
+
+    expiracao = tokens.get("expires_at", 0)
+
+    if expiracao > time.time() + 60:
+        return tokens
+
+    refresh_token = tokens.get("refresh_token")
+
+    if not refresh_token:
+        return None
+
+    response = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        },
+        timeout=30,
+    )
+
+    if not response.ok:
+        app.logger.error(
+            "Não foi possível renovar o token OAuth: HTTP %s",
+            response.status_code,
+        )
+        return None
+
+    novos_tokens = response.json()
+    tokens.update(novos_tokens)
+    tokens["expires_at"] = (
+        time.time() + int(novos_tokens.get("expires_in", 3600))
+    )
+
+    salvar_tokens(connection_id, tokens)
+    return tokens
+
+
+def consultar_canal(access_token):
+    response = requests.get(
+        "https://www.googleapis.com/youtube/v3/channels",
+        params={
+            "part": "snippet,statistics",
+            "mine": "true",
+        },
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        timeout=30,
+    )
+
+    if not response.ok:
+        app.logger.error(
+            "Consulta ao YouTube falhou: HTTP %s",
+            response.status_code,
+        )
+        return None, response.status_code
+
+    canais = response.json().get("items", [])
+
+    if not canais:
+        return None, 404
+
+    return canais[0], 200
 
 
 @app.route("/")
@@ -60,14 +194,12 @@ def home():
     return jsonify({
         "app": "YouTube Booster AI",
         "status": "Servidor funcionando",
-        "youtube_connected": bool(
-            session.get("youtube_connected")
-        ),
         "recursos": [
             "Conexão com o YouTube",
             "Leitura de dados do canal",
-            "Preparação de publicações"
-        ]
+            "Armazenamento de tokens no PostgreSQL",
+            "Preparação de publicações",
+        ],
     })
 
 
@@ -88,7 +220,7 @@ def login():
         "scope": " ".join(SCOPES),
         "access_type": "offline",
         "prompt": "consent",
-        "state": state
+        "state": state,
     }
 
     return redirect(
@@ -101,7 +233,7 @@ def login():
 def oauth_callback():
     if request.args.get("error"):
         return jsonify({
-            "erro": request.args["error"]
+            "erro": "O Google não autorizou a conexão."
         }), 400
 
     state = request.args.get("state", "")
@@ -113,6 +245,7 @@ def oauth_callback():
         }), 400
 
     code = request.args.get("code")
+
     if not code:
         return jsonify({
             "erro": "Código de autorização ausente."
@@ -126,15 +259,15 @@ def oauth_callback():
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
                 "redirect_uri": REDIRECT_URI,
-                "grant_type": "authorization_code"
+                "grant_type": "authorization_code",
             },
-            timeout=30
+            timeout=30,
         )
 
         if not response.ok:
             app.logger.error(
-                "Falha na troca do código OAuth: %s",
-                response.status_code
+                "Troca do código OAuth falhou: HTTP %s",
+                response.status_code,
             )
             return jsonify({
                 "erro": "Não foi possível concluir a autorização."
@@ -143,35 +276,25 @@ def oauth_callback():
         tokens = response.json()
         access_token = tokens.get("access_token")
 
-        channel_response = requests.get(
-            "https://www.googleapis.com/youtube/v3/channels",
-            params={
-                "part": "snippet,statistics",
-                "mine": "true"
-            },
-            headers={
-                "Authorization": f"Bearer {access_token}"
-            },
-            timeout=30
-        )
-
-        if not channel_response.ok:
+        if not access_token:
             return jsonify({
-                "erro": "Conectado, mas não foi possível ler o canal."
+                "erro": "O Google não forneceu um token de acesso."
             }), 400
 
-        channels = channel_response.json().get("items", [])
+        tokens["expires_at"] = (
+            time.time() + int(tokens.get("expires_in", 3600))
+        )
 
-        if not channels:
+        channel, status = consultar_canal(access_token)
+
+        if channel is None:
             return jsonify({
-                "erro": "Nenhum canal do YouTube foi encontrado."
-            }), 404
+                "erro": "Não foi possível consultar o canal do YouTube."
+            }), status
 
-        channel = channels[0]
-
-        # Identificador aleatório: nenhum token vai para o navegador.
         connection_id = secrets.token_urlsafe(32)
-        TOKENS[connection_id] = tokens
+        salvar_tokens(connection_id, tokens)
+
         session["connection_id"] = connection_id
         session["youtube_connected"] = True
 
@@ -182,71 +305,80 @@ def oauth_callback():
             "observacao": (
                 "Leitura do canal autorizada. "
                 "A publicação ainda não está habilitada."
-            )
+            ),
         })
 
     except requests.RequestException:
-        app.logger.exception("Erro de comunicação com o Google")
+        app.logger.exception("Falha de comunicação com o Google")
         return jsonify({
             "erro": "Falha de comunicação. Tente novamente."
         }), 502
+
+    except (psycopg2.Error, RuntimeError):
+        app.logger.exception("Falha ao salvar a conexão no banco")
+        return jsonify({
+            "erro": "Não foi possível salvar a conexão no banco."
+        }), 503
 
 
 @app.route("/api/canal")
 def dados_canal():
     connection_id = session.get("connection_id")
-    tokens = TOKENS.get(connection_id)
-
-    if not tokens:
-        return jsonify({
-            "erro": "Conecte novamente sua conta do YouTube.",
-            "login": "/login"
-        }), 401
 
     try:
-        response = requests.get(
-            "https://www.googleapis.com/youtube/v3/channels",
-            params={
-                "part": "snippet,statistics",
-                "mine": "true"
-            },
-            headers={
-                "Authorization": f"Bearer {tokens['access_token']}"
-            },
-            timeout=30
-        )
+        tokens = obter_tokens_validos(connection_id)
 
-        if not response.ok:
+        if not tokens:
+            return jsonify({
+                "erro": "Conecte novamente sua conta do YouTube.",
+                "login": "/login",
+            }), 401
+
+        channel, status = consultar_canal(tokens["access_token"])
+
+        if channel is None:
             return jsonify({
                 "erro": "Não foi possível consultar o canal."
-            }), response.status_code
+            }), status
 
-        channels = response.json().get("items", [])
-        if not channels:
-            return jsonify({"erro": "Canal não encontrado."}), 404
-
-        channel = channels[0]
+        session["youtube_connected"] = True
 
         return jsonify({
             "canal": channel["snippet"]["title"],
-            "estatisticas": channel.get("statistics", {})
+            "estatisticas": channel.get("statistics", {}),
         })
 
     except requests.RequestException:
+        app.logger.exception("Falha ao consultar o YouTube")
         return jsonify({
             "erro": "Falha de comunicação com o YouTube."
         }), 502
 
+    except (psycopg2.Error, RuntimeError):
+        app.logger.exception("Falha ao recuperar tokens do banco")
+        return jsonify({
+            "erro": "Não foi possível acessar a conexão salva."
+        }), 503
+
+
 @app.route("/api/status-conexao")
 def status_conexao():
     connection_id = session.get("connection_id")
-    tokens = TOKENS.get(connection_id)
 
-    return jsonify({
-        "sessao_ativa": bool(connection_id),
-        "token_disponivel": bool(tokens),
-        "youtube_connected": bool(tokens)
-    })
+    try:
+        tokens = buscar_tokens(connection_id)
+
+        return jsonify({
+            "sessao_ativa": bool(connection_id),
+            "token_disponivel": bool(tokens),
+            "youtube_connected": bool(tokens),
+        })
+
+    except (psycopg2.Error, RuntimeError):
+        app.logger.exception("Falha ao verificar o banco")
+        return jsonify({
+            "erro": "Não foi possível verificar a conexão."
+        }), 503
 
 
 @app.route("/api/publicacao/rascunho", methods=["POST"])
@@ -263,7 +395,9 @@ def criar_rascunho():
         }), 400
 
     if tipo not in ("video", "short", "live", "post"):
-        return jsonify({"erro": "Tipo de conteúdo inválido."}), 400
+        return jsonify({
+            "erro": "Tipo de conteúdo inválido."
+        }), 400
 
     return jsonify({
         "status": "rascunho",
@@ -273,7 +407,7 @@ def criar_rascunho():
         "publicado": False,
         "mensagem": (
             "Rascunho preparado. Nenhum conteúdo foi publicado."
-        )
+        ),
     }), 201
 
 
@@ -285,5 +419,6 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000))
+        port=int(os.environ.get("PORT", 10000)),
     )
+
