@@ -4,6 +4,9 @@ import secrets
 from urllib.parse import urlencode
 
 import requests
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, jsonify, redirect, request, session
 
 app = Flask(__name__)
