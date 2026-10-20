@@ -779,7 +779,80 @@ function analisarDesempenhoVideos() {
   }
 
   painel.replaceChildren();
+  // Indicadores de desempenho do canal
+  const totalVisualizacoes = resultados.reduce(
+    (soma, video) => soma + video.visualizacoes, 0
+  );
 
+  const mediaVisualizacoes = resultados.length
+    ? Math.round(totalVisualizacoes / resultados.length)
+    : 0;
+
+  const lider = resultados.length ? resultados[0] : null;
+
+  const indicadores = document.createElement("div");
+  indicadores.style.cssText =
+    "display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));" +
+    "gap:12px;margin:16px 0 24px;";
+
+  const dadosIndicadores = [
+    {
+      icone: "👁️",
+      titulo: "Visualizações totais",
+      valor: totalVisualizacoes.toLocaleString("pt-BR"),
+      cor: "#54d6ff"
+    },
+    {
+      icone: "🎬",
+      titulo: "Vídeos analisados",
+      valor: resultados.length.toLocaleString("pt-BR"),
+      cor: "#20d6a0"
+    },
+    {
+      icone: "📊",
+      titulo: "Média por vídeo",
+      valor: mediaVisualizacoes.toLocaleString("pt-BR"),
+      cor: "#b79aff"
+    },
+    {
+      icone: "🏆",
+      titulo: "Vídeo líder",
+      valor: lider
+        ? lider.visualizacoes.toLocaleString("pt-BR")
+        : "0",
+      cor: "#ffca69"
+    }
+  ];
+
+  dadosIndicadores.forEach(function(dado) {
+    const cartao = document.createElement("div");
+    cartao.style.cssText =
+      "background:linear-gradient(145deg,#151f33,#0c1322);" +
+      "border:1px solid #293b59;border-radius:14px;" +
+      "padding:16px;box-shadow:0 5px 18px rgba(0,0,0,.2);";
+
+    const icone = document.createElement("div");
+    icone.textContent = dado.icone;
+    icone.style.cssText = "font-size:24px;margin-bottom:10px;";
+
+    const titulo = document.createElement("div");
+    titulo.textContent = dado.titulo;
+    titulo.style.cssText =
+      "font-size:12px;color:#a9b9d2;margin-bottom:8px;";
+
+    const valor = document.createElement("div");
+    valor.textContent = dado.valor;
+    valor.style.cssText =
+      "font-size:25px;font-weight:800;color:" + dado.cor +
+      ";overflow-wrap:anywhere;";
+
+    cartao.appendChild(icone);
+    cartao.appendChild(titulo);
+    cartao.appendChild(valor);
+    indicadores.appendChild(cartao);
+  });
+
+  painel.appendChild(indicadores);
   function adicionarTitulo(texto) {
     const h = document.createElement("h2");
     h.textContent = texto;
