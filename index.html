@@ -741,32 +741,34 @@ async function carregarVideos() {
     status.textContent = "Não foi possível carregar os vídeos: " + erro.message;
   }
 }
+
 function analisarDesempenhoVideos() {
   const lista = document.getElementById("listaVideos");
   const status = document.getElementById("videosStatus");
 
   if (!lista || !lista.children.length) {
     if (status) {
-      status.textContent = "Primeiro clique em Atualizar vídeos para carregar os dados.";
+      status.textContent = "Clique em Atualizar vídeos para carregar os dados.";
     }
     return;
   }
 
   const cartoes = Array.from(lista.querySelectorAll(".item"));
+
   const resultados = cartoes.map(function(cartao) {
     const titulo = cartao.querySelector("h3")?.textContent || "Vídeo sem título";
     const detalhes = cartao.querySelector("p")?.textContent || "";
     const match = detalhes.match(/Visualizações:\s*([\d.]+)/);
-    const visualizacoes = match
-      ? Number(match[1].replace(/\./g, ""))
-      : 0;
 
-    return { titulo, visualizacoes };
+    return {
+      titulo: titulo,
+      visualizacoes: match
+        ? Number(match[1].replace(/\./g, ""))
+        : 0
+    };
   });
 
-  resultados.sort(function(a, b) {
-    return b.visualizacoes - a.visualizacoes;
-  });
+  resultados.sort((a, b) => b.visualizacoes - a.visualizacoes);
 
   let painel = document.getElementById("analiseVideos");
 
@@ -779,36 +781,159 @@ function analisarDesempenhoVideos() {
 
   painel.replaceChildren();
 
-  const tituloPainel = document.createElement("h2");
-  tituloPainel.textContent = "📊 Análise de desempenho";
-  painel.appendChild(tituloPainel);
+  function adicionarTitulo(texto) {
+    const h = document.createElement("h2");
+    h.textContent = texto;
+    painel.appendChild(h);
+  }
 
-  const descricao = document.createElement("p");
-  descricao.textContent = "Vídeos ordenados pelo total de visualizações informado pelo YouTube.";
-  painel.appendChild(descricao);
+  function adicionarTexto(texto) {
+    const p = document.createElement("p");
+    p.textContent = texto;
+    painel.appendChild(p);
+    return p;
+  }
+
+  adicionarTitulo("📊 Comparação de desempenho");
+  adicionarTexto(
+    "Confira quais vídeos tiveram mais visualizações. A comparação usa os números retornados pelo YouTube."
+  );
+
+  const total = resultados.reduce(
+    (soma, video) => soma + video.visualizacoes, 0
+  );
+
+  adicionarTexto(
+    "Vídeos analisados: " + resultados.length +
+    " · Visualizações somadas: " + total.toLocaleString("pt-BR")
+  );
+
+  // Gráfico horizontal dos cinco vídeos mais vistos
+  adicionarTitulo("📈 Os 5 vídeos mais vistos");
 
   const melhores = resultados.slice(0, 5);
+  const maior = Math.max(1, ...melhores.map(v => v.visualizacoes));
 
   melhores.forEach(function(video, indice) {
     const item = document.createElement("div");
     item.className = "item";
 
-    const nome = document.createElement("h3");
+    const nome = document.createElement("p");
     nome.textContent = (indice + 1) + "º — " + video.titulo;
     item.appendChild(nome);
 
-    const views = document.createElement("p");
-    views.textContent = "👁️ " + video.visualizacoes.toLocaleString("pt-BR") + " visualizações";
-    item.appendChild(views);
+    const trilho = document.createElement("div");
+    trilho.style.cssText =
+      "width:100%;height:16px;background:#293650;border-radius:8px;overflow:hidden;";
+
+    const barra = document.createElement("div");
+    barra.style.cssText =
+      "height:16px;background:#4387ff;border-radius:8px;width:" +
+      Math.max(0, video.visualizacoes / maior * 100) + "%;";
+
+    trilho.appendChild(barra);
+    item.appendChild(trilho);
+
+    const numero = document.createElement("p");
+    numero.textContent =
+      video.visualizacoes.toLocaleString("pt-BR") + " visualizações";
+    item.appendChild(numero);
 
     painel.appendChild(item);
   });
 
-  const sugestao = document.createElement("p");
-  sugestao.textContent =
-    "💡 Ideia: observe os temas e momentos dos vídeos com mais visualizações. " +
-    "Teste novos Shorts com ação logo nos primeiros 3 segundos e compare os resultados.";
-  painel.appendChild(sugestao);
+  // Lista comparativa de todos os vídeos carregados
+  adicionarTitulo("🏆 Ranking de visualizações");
+
+  resultados.forEach(function(video, indice) {
+    const item = document.createElement("div");
+    item.className = "item";
+
+    const nome = document.createElement("b");
+    nome.textContent = (indice + 1) + "º — " + video.titulo;
+    item.appendChild(nome);
+
+    const numero = document.createElement("p");
+    numero.textContent =
+      "👁️ " + video.visualizacoes.toLocaleString("pt-BR") +
+      " visualizações";
+    item.appendChild(numero);
+
+    painel.appendChild(item);
+  });
+
+  // Identificação simples de temas recorrentes nos títulos
+  adicionarTitulo("💡 Ideias para novos Shorts");
+
+  const temas = [
+    {
+      nome: "Sniper e tiros de longa distância",
+      palavras: ["sniper", "tiro", "alvo", "distância", "metros"]
+    },
+    {
+      nome: "Infiltração em bases inimigas",
+      palavras: ["base", "infiltração", "infiltrar", "missão"]
+    },
+    {
+      nome: "Combates e situações inesperadas",
+      palavras: ["combate", "erro", "errado", "ataque", "explosão", "helicóptero"]
+    },
+    {
+      nome: "Operações perigosas",
+      palavras: ["operação", "perigosa", "perigo", "bolívia"]
+    }
+  ];
+
+  const pontuacoes = temas.map(function(tema) {
+    const relacionados = resultados.filter(function(video) {
+      const titulo = video.titulo.toLowerCase();
+      return tema.palavras.some(palavra => titulo.includes(palavra));
+    });
+
+    return {
+      nome: tema.nome,
+      quantidade: relacionados.length,
+      visualizacoes: relacionados.reduce(
+        (soma, video) => soma + video.visualizacoes, 0
+      )
+    };
+  }).sort((a, b) => b.visualizacoes - a.visualizacoes);
+
+  pontuacoes.forEach(function(tema) {
+    const item = document.createElement("div");
+    item.className = "item";
+
+    const nome = document.createElement("b");
+    nome.textContent = tema.nome;
+    item.appendChild(nome);
+
+    const detalhe = document.createElement("p");
+    detalhe.textContent = tema.quantidade
+      ? tema.quantidade + " vídeo(s) relacionado(s) · " +
+        tema.visualizacoes.toLocaleString("pt-BR") +
+        " visualizações somadas"
+      : "Ainda não há títulos relacionados entre os vídeos carregados.";
+    item.appendChild(detalhe);
+
+    const sugestao = document.createElement("p");
+    sugestao.textContent = "Short sugerido: " + (
+      tema.nome.includes("Sniper")
+        ? "O tiro mais difícil que tentei acertar no Wildlands!"
+        : tema.nome.includes("Infiltração")
+        ? "Consegui entrar na base sem ser detectado?"
+        : tema.nome.includes("Combates")
+        ? "Um erro transformou a missão em um combate total!"
+        : "A operação mais tensa da Bolívia!"
+    );
+    item.appendChild(sugestao);
+
+    painel.appendChild(item);
+  });
+
+  adicionarTexto(
+    "Observação: as sugestões são baseadas nos títulos dos vídeos carregados. " +
+    "Visualizações não garantem o desempenho de novos Shorts."
+  );
 }
   init();
 </script>
