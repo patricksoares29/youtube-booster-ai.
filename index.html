@@ -807,39 +807,79 @@ function analisarDesempenhoVideos() {
     " · Visualizações somadas: " + total.toLocaleString("pt-BR")
   );
 
-  // Gráfico horizontal dos cinco vídeos mais vistos
-  adicionarTitulo("📈 Os 5 vídeos mais vistos");
+   // Gráfico moderno dos cinco vídeos mais vistos
+  adicionarTitulo("📈 TOP 5 — VÍDEOS MAIS VISTOS");
 
   const melhores = resultados.slice(0, 5);
   const maior = Math.max(1, ...melhores.map(v => v.visualizacoes));
 
-  melhores.forEach(function(video, indice) {
-    const item = document.createElement("div");
-    item.className = "item";
+  const grafico = document.createElement("div");
+  grafico.style.cssText =
+    "display:grid;gap:16px;margin:16px 0 24px;";
 
-    const nome = document.createElement("p");
-    nome.textContent = (indice + 1) + "º — " + video.titulo;
-    item.appendChild(nome);
+  melhores.forEach(function(video, indice) {
+    const cartao = document.createElement("div");
+    cartao.style.cssText =
+      "background:linear-gradient(145deg,#151f33,#0c1322);" +
+      "border:1px solid #293b59;border-radius:14px;" +
+      "padding:15px;box-shadow:0 5px 18px rgba(0,0,0,.22);";
+
+    const cabecalho = document.createElement("div");
+    cabecalho.style.cssText =
+      "display:flex;justify-content:space-between;" +
+      "align-items:flex-start;gap:12px;margin-bottom:12px;";
+
+    const nome = document.createElement("div");
+    nome.textContent = (indice + 1) + "º  " + video.titulo;
+    nome.style.cssText =
+      "color:#f1f5ff;font-weight:600;font-size:14px;" +
+      "line-height:1.5;overflow-wrap:anywhere;";
+
+    const numero = document.createElement("div");
+    numero.textContent =
+      video.visualizacoes.toLocaleString("pt-BR");
+    numero.style.cssText =
+      "color:#54d6ff;font-weight:800;font-size:16px;" +
+      "white-space:nowrap;";
+
+    cabecalho.appendChild(nome);
+    cabecalho.appendChild(numero);
+    cartao.appendChild(cabecalho);
 
     const trilho = document.createElement("div");
     trilho.style.cssText =
-      "width:100%;height:16px;background:#293650;border-radius:8px;overflow:hidden;";
+      "height:12px;background:#26334a;border-radius:20px;" +
+      "overflow:hidden;";
 
     const barra = document.createElement("div");
+    const percentual = Math.max(
+      0,
+      Math.min(100, video.visualizacoes / maior * 100)
+    );
+
     barra.style.cssText =
-      "height:16px;background:#4387ff;border-radius:8px;width:" +
-      Math.max(0, video.visualizacoes / maior * 100) + "%;";
+      "height:100%;width:0%;border-radius:20px;" +
+      "background:linear-gradient(90deg,#4387ff,#20d6a0);" +
+      "transition:width 1s ease;";
 
     trilho.appendChild(barra);
-    item.appendChild(trilho);
+    cartao.appendChild(trilho);
 
-    const numero = document.createElement("p");
-    numero.textContent =
-      video.visualizacoes.toLocaleString("pt-BR") + " visualizações";
-    item.appendChild(numero);
+    const rodape = document.createElement("div");
+    rodape.textContent =
+      percentual.toFixed(0) + "% do desempenho do líder";
+    rodape.style.cssText =
+      "color:#91a4c3;font-size:12px;margin-top:9px;";
 
-    painel.appendChild(item);
+    cartao.appendChild(rodape);
+    grafico.appendChild(cartao);
+
+    setTimeout(function() {
+      barra.style.width = percentual + "%";
+    }, 100 + indice * 120);
   });
+
+  painel.appendChild(grafico);
 
   // Lista comparativa de todos os vídeos carregados
   adicionarTitulo("🏆 Ranking de visualizações");
