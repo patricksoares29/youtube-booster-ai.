@@ -121,6 +121,21 @@ a{color:#8cb5ff}
 <div class="actions"><button onclick="addMetric()">Salvar registro</button></div>
 </div>
 <div class="card"><h2>Histórico</h2><div id="historyList"></div></div>
+<div class="card">
+  <h2>🎬 Vídeos do canal Mister Kenne</h2>
+  <p>Veja seus vídeos publicados e compare as visualizações.</p>
+
+  <div class="actions">
+    <button onclick="carregarVideos()">🔄 Atualizar vídeos</button>
+  </div>
+
+  <div id="videosStatus" class="item">
+    Clique em “Atualizar vídeos” para carregar seus vídeos.
+  </div>
+
+  <div id="listaVideos"></div>
+</div>
+
 </section>
 
 <section id="conteudos" class="panel">
