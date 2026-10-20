@@ -733,7 +733,11 @@ async function carregarVideos() {
 
       lista.appendChild(cartao);
     });
+    });
 
+    analisarDesempenhoVideos();
+
+  } catch (erro) {
   } catch (erro) {
     status.textContent = "Não foi possível carregar os vídeos: " + erro.message;
   }
