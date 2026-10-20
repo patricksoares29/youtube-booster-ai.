@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -66,8 +65,8 @@ a{color:#8cb5ff}
 <h2>📊 Visão geral</h2>
 <p>Organize a produção do seu canal e acompanhe os resultados informados ou importados.</p>
 <div class="grid">
-<div class="stat">Inscritos<strong id="statSubs">—</strong><span class="small">Último registro</span></div>
-<div class="stat">Visualizações<strong id="statViews">—</strong><span class="small">Último registro</span></div>
+<div class="stat">Inscritos<strong id="statSubs">—</strong><span class="small">Dados do canal ou último registro</span></div>
+<div class="stat">Visualizações<strong id="statViews">—</strong><span class="small">Dados do canal ou último registro</span></div>
 <div class="stat">Vídeos planejados<strong id="statPlans">0</strong><span class="small">Biblioteca</span></div>
 <div class="stat">Ideias salvas<strong id="statIdeas">0</strong><span class="small">Status ideia</span></div>
 </div>
@@ -184,6 +183,7 @@ const KEY="youtube_booster_ai_v1";
 const HISTORY_KEY="youtube_booster_history_v1";
 const CAL_KEY="youtube_booster_calendar_v1";
 const GEN_KEY="youtube_booster_gerados_v3";
+const CHANNEL_STATS_KEY="youtube_booster_channel_stats";
 const $=id=>document.getElementById(id);
 
 let contents=[],metrics=[],calendar=[],generatedHistory=[];
@@ -229,17 +229,28 @@ function init(){
  render();
 }
 
+function validNumber(value){
+ return value!==""&&value!==null&&value!==undefined&&Number.isFinite(Number(value))&&Number(value)>=0;
+}
+
 function updateDashboard(){
  const last=metrics[metrics.length-1];
- 
-$("statSubs").textContent = last && Number.isFinite(Number(last.subs)) && last.subs !== "" && last.subs != null
-  ? Number(last.subs).toLocaleString("pt-BR")
-  : "—";
+ const channelStats=read(CHANNEL_STATS_KEY,null);
 
-$("statViews").textContent = last && Number.isFinite(Number(last.views)) && last.views !== "" && last.views != null
-  ? Number(last.views).toLocaleString("pt-BR")
-  : "—";
+ const subsFromChannel=channelStats&&validNumber(channelStats.subscriberCount)
+  ?Number(channelStats.subscriberCount):null;
 
+ const viewsFromChannel=channelStats&&validNumber(channelStats.viewCount)
+  ?Number(channelStats.viewCount):null;
+
+ const subsFromHistory=last&&validNumber(last.subs)?Number(last.subs):null;
+ const viewsFromHistory=last&&validNumber(last.views)?Number(last.views):null;
+
+ const subs=subsFromChannel!==null?subsFromChannel:subsFromHistory;
+ const views=viewsFromChannel!==null?viewsFromChannel:viewsFromHistory;
+
+ $("statSubs").textContent=subs!==null?subs.toLocaleString("pt-BR"):"—";
+ $("statViews").textContent=views!==null?views.toLocaleString("pt-BR"):"—";
  $("statPlans").textContent=contents.length;
  $("statIdeas").textContent=contents.filter(c=>c.status==="Ideia").length;
 }
@@ -301,9 +312,9 @@ function addMetric(){
  const m={
   id:Date.now(),
   date:$("metricDate").value||new Date().toISOString().slice(0,10),
-  subs:Number($("metricSubs").value||0),
-  views:Number($("metricViews").value||0),
-  videos:Number($("metricVideos").value||0)
+  subs:$("metricSubs").value===""?0:Number($("metricSubs").value),
+  views:$("metricViews").value===""?0:Number($("metricViews").value),
+  videos:$("metricVideos").value===""?0:Number($("metricVideos").value)
  };
 
  if(![$("metricSubs").value,$("metricViews").value,$("metricVideos").value].some(v=>v!=="")){
@@ -545,6 +556,7 @@ function saveApi(){
  }
 
  localStorage.setItem("youtube_booster_api",url);
+ showNotice("Endereço do backend salvo.");
  return true;
 }
 
@@ -589,22 +601,43 @@ async function connectChannel(){
    throw new Error("O servidor respondeu com HTTP "+response.status);
   }
 
-  
-$("channelResult").textContent = JSON.stringify(data, null, 2);
+  $("channelResult").textContent=JSON.stringify(data,null,2);
 
-const stats = data.estatisticas || data.statistics || {};
-const inscritos = Number(stats.subscriberCount);
-const visualizacoes = Number(stats.viewCount);
+  const stats=
+   data.estatisticas||
+   data.statistics||
+   (data.canal&&data.canal.estatisticas)||
+   (data.canal&&data.canal.statistics)||
+   {};
 
-if (Number.isFinite(inscritos)) {
-  $("statSubs").textContent = inscritos.toLocaleString("pt-BR");
-}
+  const inscritoRaw=stats.subscriberCount;
+  const visualizacaoRaw=stats.viewCount;
+  const videosRaw=stats.videoCount;
 
-if (Number.isFinite(visualizacoes)) {
-  $("statViews").textContent = visualizacoes.toLocaleString("pt-BR");
-}
+  const inscritoValido=validNumber(inscritoRaw);
+  const visualizacaoValida=validNumber(visualizacaoRaw);
+  const videosValido=validNumber(videosRaw);
 
-showNotice("Canal consultado e painel atualizado!");
+  if(inscritoValido||visualizacaoValida||videosValido){
+   const savedStats=read(CHANNEL_STATS_KEY,{});
+
+   if(inscritoValido)savedStats.subscriberCount=Number(inscritoRaw);
+   if(visualizacaoValida)savedStats.viewCount=Number(visualizacaoRaw);
+   if(videosValido)savedStats.videoCount=Number(videosRaw);
+
+   savedStats.channelName=data.canalNome||data.canal||data.channelName||savedStats.channelName||"";
+   savedStats.updatedAt=new Date().toISOString();
+
+   localStorage.setItem(CHANNEL_STATS_KEY,JSON.stringify(savedStats));
+  }
+
+  updateDashboard();
+
+  if(!inscritoValido&&!visualizacaoValida){
+   showNotice("Canal consultado, mas o servidor não retornou números válidos de inscritos e visualizações.");
+  }else{
+   showNotice("Canal consultado! Os dados foram salvos neste navegador.");
+  }
 
  }catch(e){
   $("channelResult").textContent="Não foi possível consultar o canal. Confira se o backend está ativo e se o CORS permite esta página. Detalhe: "+e.message;
