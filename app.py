@@ -211,6 +211,17 @@ def dados_canal():
             "erro": "Falha de comunicação com o YouTube."
         }), 502
 
+@app.route("/api/status-conexao")
+def status_conexao():
+    connection_id = session.get("connection_id")
+    tokens = TOKENS.get(connection_id)
+
+    return jsonify({
+        "sessao_ativa": bool(connection_id),
+        "token_disponivel": bool(tokens),
+        "youtube_connected": bool(tokens)
+    })
+
 
 @app.route("/api/publicacao/rascunho", methods=["POST"])
 def criar_rascunho():
