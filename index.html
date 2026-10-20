@@ -47,6 +47,28 @@ textarea{min-height:160px;resize:vertical}
   padding:10px;
   border-radius:8px;
 }
+  .status-select{
+  font-weight:bold;
+  border:2px solid;
+}
+
+.status-select[data-status="Ideia"]{
+  background:#374151;
+  color:#f3f4f6;
+  border-color:#6b7280;
+}
+
+.status-select[data-status="Planejado"]{
+  background:#713f12;
+  color:#fef08a;
+  border-color:#eab308;
+}
+
+.status-select[data-status="Publicado"]{
+  background:#14532d;
+  color:#bbf7d0;
+  border-color:#22c55e;
+}
 .item{border:1px solid var(--border);background:#10192b;padding:14px;border-radius:10px;margin:10px 0}
 .item h3{margin-bottom:7px}
 .item p{white-space:pre-wrap;overflow-wrap:anywhere}
@@ -309,7 +331,7 @@ function renderContents(){
  <div class="actions">
  <label>
    Alterar status:
-   <select onchange="changeStatusSelect(${Number(c.id)}, this.value)">
+  <select class="status-select" data-status="${esc(c.status || "Ideia")}" onchange="changeStatusSelect(${Number(c.id)}, this.value)">
      <option value="Ideia" ${c.status === "Ideia" ? "selected" : ""}>Ideia</option>
      <option value="Planejado" ${c.status === "Planejado" ? "selected" : ""}>Planejado</option>
      <option value="Publicado" ${c.status === "Publicado" ? "selected" : ""}>Publicado</option>
@@ -406,9 +428,9 @@ function changeStatusSelect(id, status){
  if (!statuses.includes(status)) return;
 
  c.status = status;
- save();
- render();
- showNotice("Status atualizado: " + c.status);
+save();
+renderContents();
+showNotice("Status atualizado: " + c.status);
 }
 
 function deleteContent(id){
