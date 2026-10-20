@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#15161c">
 <title>YouTube Booster AI</title>
-
 <style>
 :root {
   --bg:#101116;
@@ -29,7 +28,7 @@ header {
   background:linear-gradient(125deg,#38191b,#171923 70%);
   border-bottom:1px solid var(--line)
 }
-.wrap { max-width:1050px;margin:auto;padding:16px }
+.wrap { max-width:1100px;margin:auto;padding:16px }
 h1 { font-size:24px;margin:0 0 5px }
 h2 { font-size:18px;margin:0 0 13px }
 h3 { font-size:16px;margin:0 }
@@ -101,7 +100,6 @@ button,.btn {
   display:flex;justify-content:space-between;align-items:center;
   gap:10px;margin-bottom:12px
 }
-textarea#generated { min-height:155px }
 .helper {
   border-left:3px solid var(--gold);padding:8px 10px;
   background:#24232a;border-radius:0 8px 8px 0;
@@ -113,6 +111,23 @@ textarea#generated { min-height:155px }
 }
 .status-ok { color:var(--green) }
 .status-error { color:#ff8b8b }
+.chart {
+  display:flex;align-items:end;gap:7px;height:150px;
+  padding:12px 4px 0;border-bottom:1px solid var(--line)
+}
+.bar {
+  flex:1;min-width:8px;background:var(--red);
+  border-radius:5px 5px 0 0;position:relative
+}
+.bar span {
+  position:absolute;bottom:100%;left:50%;
+  transform:translateX(-50%);font-size:10px;color:var(--muted)
+}
+.bar-labels { display:flex;gap:7px;margin-top:5px }
+.bar-labels span {
+  flex:1;min-width:0;text-align:center;font-size:10px;color:var(--muted)
+}
+.idea { border:1px solid var(--line);padding:12px;border-radius:12px }
 @media(min-width:760px) {
   .grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
   .items { grid-template-columns:1fr 1fr }
@@ -126,7 +141,6 @@ textarea#generated { min-height:155px }
 }
 </style>
 </head>
-
 <body>
 <header>
   <div class="wrap">
@@ -139,78 +153,42 @@ textarea#generated { min-height:155px }
     </div>
     <nav>
       <button class="tab active" data-tab="painel">Painel</button>
+      <button class="tab" data-tab="desempenho">Desempenho</button>
       <button class="tab" data-tab="conteudos">Conteúdos</button>
-      <button class="tab" data-tab="criar">Criar publicação</button>
+      <button class="tab" data-tab="criar">Criar conteúdo</button>
+      <button class="tab" data-tab="calendario">Calendário</button>
       <button class="tab" data-tab="estrategia">Estratégia</button>
       <button class="tab" data-tab="backup">Backup</button>
     </nav>
   </div>
 </header>
-
 <main class="wrap">
   <div id="notice" class="notice hidden" role="status"></div>
-
   <section id="painel">
     <div class="panel">
       <div class="section-head">
         <h2>Estatísticas reais do YouTube</h2>
-        <button type="button" class="secondary"
-          onclick="carregarDadosYouTube()">Atualizar</button>
+        <button type="button" class="secondary" onclick="carregarDadosYouTube()">Atualizar</button>
       </div>
-
-      <div id="youtubeConnectionStatus" class="connection" aria-live="polite">
-        Aguardando consulta ao YouTube...
-      </div>
-
+      <div id="youtubeConnectionStatus" class="connection">Consultando canal...</div>
       <div class="grid">
-        <div class="stat">
-          <strong id="ytSubscribers">—</strong>
-          <span>Inscritos no canal</span>
-        </div>
-        <div class="stat">
-          <strong id="ytViews">—</strong>
-          <span>Visualizações do canal</span>
-        </div>
-        <div class="stat">
-          <strong id="ytVideos">—</strong>
-          <span>Vídeos publicados</span>
-        </div>
-        <div class="stat">
-          <strong id="ytChannel">—</strong>
-          <span>Canal conectado</span>
-        </div>
+        <div class="stat"><strong id="ytSubscribers">—</strong><span>Inscritos</span></div>
+        <div class="stat"><strong id="ytViews">—</strong><span>Visualizações</span></div>
+        <div class="stat"><strong id="ytVideos">—</strong><span>Vídeos publicados</span></div>
+        <div class="stat"><strong id="ytChannel">—</strong><span>Canal conectado</span></div>
       </div>
-
       <div class="actions">
-        <button type="button" onclick="conectarYouTube()">Conectar YouTube</button>
-        <button type="button" class="secondary"
-          onclick="abrirStatusAPI()">Verificar servidor</button>
+        <button onclick="conectarYouTube()">Conectar YouTube</button>
+        <button class="secondary" onclick="abrirStatusAPI()">Verificar servidor</button>
       </div>
-      <p class="small">
-        Estes números vêm da API do YouTube. Eles são diferentes dos registros
-        manuais dos conteúdos planejados abaixo.
-      </p>
+      <p class="small">Dados obtidos da API do YouTube. Os históricos começam a partir das consultas registradas neste painel.</p>
     </div>
-
     <div class="grid">
-      <div class="stat">
-        <strong id="total">0</strong>
-        <span>Conteúdos planejados</span>
-      </div>
-      <div class="stat">
-        <strong id="pending">0</strong>
-        <span>Aguardando aprovação</span>
-      </div>
-      <div class="stat">
-        <strong id="views">0</strong>
-        <span>Visualizações registradas manualmente</span>
-      </div>
-      <div class="stat">
-        <strong id="subs">0</strong>
-        <span>Inscritos atribuídos manualmente</span>
-      </div>
+      <div class="stat"><strong id="total">0</strong><span>Conteúdos planejados</span></div>
+      <div class="stat"><strong id="pending">0</strong><span>Aguardando aprovação</span></div>
+      <div class="stat"><strong id="views">0</strong><span>Visualizações manuais</span></div>
+      <div class="stat"><strong id="subs">0</strong><span>Inscritos atribuídos manualmente</span></div>
     </div>
-
     <div class="panel">
       <div class="section-head">
         <h2>Próximas publicações</h2>
@@ -218,529 +196,43 @@ textarea#generated { min-height:155px }
       </div>
       <div id="nextitems" class="items"></div>
     </div>
-
+  </section>
+  <section id="desempenho" class="hidden">
     <div class="panel">
-      <h2>Fluxo recomendado</h2>
-      <div class="helper">
-        1. Cadastre a ideia → 2. Prepare título e descrição →
-        3. Revise e aprove → 4. Publique no YouTube →
-        5. Registre os resultados para comparar.
+      <h2>Histórico de desempenho do canal</h2>
+      <p>Uma medição é registrada quando os dados reais do canal são carregados com sucesso.</p>
+      <div class="grid">
+        <div class="stat"><strong id="historyCount">0</strong><span>Medições salvas</span></div>
+        <div class="stat"><strong id="growthSubs">—</strong><span>Variação de inscritos</span></div>
+        <div class="stat"><strong id="growthViews">—</strong><span>Variação de visualizações</span></div>
+        <div class="stat"><strong id="growthVideos">—</strong><span>Variação de vídeos</span></div>
       </div>
+      <h3>Visualizações registradas</h3>
+      <div id="viewsChart" class="chart"></div>
+      <div id="viewsLabels" class="bar-labels"></div>
+      <h3 style="margin-top:22px">Inscritos registrados</h3>
+      <div id="subsChart" class="chart"></div>
+      <div id="subsLabels" class="bar-labels"></div>
+      <div class="actions">
+        <button onclick="exportHistory()">Exportar histórico</button>
+        <button class="secondary" onclick="clearHistory()">Limpar histórico</button>
+      </div>
+      <p class="small">O YouTube fornece os totais atuais. O histórico deste painel não recupera dados anteriores à primeira medição salva.</p>
     </div>
   </section>
-
   <section id="conteudos" class="hidden">
     <div class="panel">
-      <div class="section-head">
-        <h2>Biblioteca de conteúdos</h2>
-        <button onclick="showTab('criar')">＋ Novo</button>
-      </div>
+      <div class="section-head"><h2>Biblioteca de conteúdos</h2><button onclick="showTab('criar')">＋ Novo</button></div>
       <div class="filters">
         <select id="filterStatus" onchange="render()">
           <option value="">Todos os status</option>
-          <option>Ideia</option>
-          <option>Rascunho</option>
-          <option>Aguardando aprovação</option>
-          <option>Aprovado</option>
-          <option>Publicado</option>
+          <option>Ideia</option><option>Rascunho</option><option>Aguardando aprovação</option><option>Aprovado</option><option>Publicado</option>
         </select>
         <select id="filterType" onchange="render()">
           <option value="">Todos os formatos</option>
-          <option>Short</option>
-          <option>Vídeo</option>
-          <option>Live</option>
-          <option>Post de divulgação</option>
+          <option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option>
         </select>
       </div>
     </div>
     <div id="allitems" class="items"></div>
   </section>
-
-  <section id="criar" class="hidden">
-    <div class="panel">
-      <h2 id="formtitle">Cadastrar conteúdo</h2>
-      <form id="contentForm">
-        <input type="hidden" id="editId">
-        <div class="formgrid">
-          <div class="full">
-            <label for="title">Título ou ideia *</label>
-            <input id="title" required
-              placeholder="Ex.: Acertei o alvo a mais de 660 metros!">
-          </div>
-          <div>
-            <label for="type">Formato</label>
-            <select id="type">
-              <option>Short</option>
-              <option>Vídeo</option>
-              <option>Live</option>
-              <option>Post de divulgação</option>
-            </select>
-          </div>
-          <div>
-            <label for="status">Status</label>
-            <select id="status">
-              <option>Ideia</option>
-              <option>Rascunho</option>
-              <option>Aguardando aprovação</option>
-              <option>Aprovado</option>
-              <option>Publicado</option>
-            </select>
-          </div>
-          <div class="full">
-            <label for="planned">Data e hora planejadas</label>
-            <input id="planned" type="datetime-local">
-          </div>
-          <div class="full">
-            <label for="description">Descrição / chamada para ação</label>
-            <textarea id="description"
-              placeholder="Explique o momento e convide o público a assistir."></textarea>
-          </div>
-          <div class="full">
-            <label for="hashtags">Hashtags</label>
-            <input id="hashtags" placeholder="#GhostReconWildlands #Shorts #Games">
-          </div>
-          <div class="full">
-            <label for="url">Link do YouTube (quando publicado)</label>
-            <input id="url" type="url" placeholder="https://youtube.com/...">
-          </div>
-          <div class="full">
-            <label for="notes">Notas de edição / gancho inicial</label>
-            <textarea id="notes"
-              placeholder="O que acontece nos primeiros 3 segundos? Ideia para thumbnail?"></textarea>
-          </div>
-          <div class="full row">
-            <button type="submit">Salvar conteúdo</button>
-            <button type="button" class="secondary" onclick="resetForm()">Limpar formulário</button>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div class="panel">
-      <h2>Gerador rápido de texto</h2>
-      <p>Gera uma sugestão inicial para você revisar. Não usa IA externa.</p>
-      <label for="genTopic">Tema do vídeo</label>
-      <input id="genTopic" placeholder="Ex.: infiltração em uma base de San Mateo">
-      <label for="genType">Formato</label>
-      <select id="genType">
-        <option>Short</option>
-        <option>Vídeo</option>
-        <option>Live</option>
-        <option>Post de divulgação</option>
-      </select>
-      <div class="actions">
-        <button onclick="generateText()">Gerar título e descrição</button>
-        <button class="secondary" onclick="copyGenerated()">Copiar texto</button>
-      </div>
-      <label for="generated">Texto gerado</label>
-      <textarea id="generated" placeholder="Sua sugestão aparecerá aqui..."></textarea>
-    </div>
-  </section>
-
-  <section id="estrategia" class="hidden">
-    <div class="panel">
-      <h2>Plano simples para Ghost Recon Wildlands</h2>
-      <div class="items">
-        <div class="item">
-          <h3>Shorts: chamar atenção</h3>
-          <p>Comece direto com o tiro, erro, explosão ou descoberta.</p>
-          <p class="small">Teste 15–35 segundos como ponto de partida.</p>
-        </div>
-        <div class="item">
-          <h3>Vídeos: entregar uma história</h3>
-          <p>Mostre o objetivo logo no início e corte deslocamentos sem ação.</p>
-        </div>
-        <div class="item">
-          <h3>Lives: criar um motivo para voltar</h3>
-          <p>Defina uma missão e um objetivo claros no título.</p>
-        </div>
-        <div class="item">
-          <h3>Revisão semanal</h3>
-          <p>Compare impressões, taxa de cliques, retenção e inscritos ganhos.</p>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>Checklist antes de publicar</h2>
-      <label><input type="checkbox"> O começo entrega o momento prometido?</label>
-      <label><input type="checkbox"> O título corresponde ao que acontece?</label>
-      <label><input type="checkbox"> A thumbnail é legível em tela pequena?</label>
-      <label><input type="checkbox"> A descrição tem uma chamada clara?</label>
-      <label><input type="checkbox"> Revisei áudio, cortes e direitos de uso?</label>
-    </div>
-  </section>
-
-  <section id="backup" class="hidden">
-    <div class="panel">
-      <h2>Seus dados e backup</h2>
-      <p>Os conteúdos planejados são guardados neste navegador e aparelho.</p>
-      <div class="actions">
-        <button onclick="exportData()">Exportar backup JSON</button>
-        <button class="secondary" onclick="document.getElementById('importFile').click()">Importar backup</button>
-        <button class="secondary" onclick="exportCSV()">Exportar CSV</button>
-        <input class="hidden" type="file" id="importFile"
-          accept=".json,application/json" onchange="importData(event)">
-      </div>
-      <p class="small">Guarde o arquivo de backup numa pasta segura.</p>
-      <div class="notice">
-        A conexão com o YouTube é somente para leitura. A publicação de vídeos
-        diretamente pelo sistema ainda não está habilitada.
-      </div>
-    </div>
-  </section>
-</main>
-
-<script>
-const KEY = "youtube_booster_ai_v1";
-const API = "https://youtube-booster-ai.onrender.com";
-let contents = [];
-
-function load() {
-  try {
-    contents = JSON.parse(localStorage.getItem(KEY) || "[]");
-    if (!Array.isArray(contents)) contents = [];
-  } catch (e) {
-    contents = [];
-  }
-
-  if (!contents.length) {
-    contents = [{
-      id: Date.now(),
-      title: "Acertei o alvo a mais de 660 metros!",
-      type: "Short",
-      status: "Ideia",
-      planned: "",
-      description: "Um tiro de sniper impressionante em Ghost Recon Wildlands.",
-      hashtags: "#GhostReconWildlands #Shorts #Games",
-      url: "",
-      notes: "Começar com o momento do disparo.",
-      views: 0,
-      subs: 0,
-      created: new Date().toISOString()
-    }];
-    save();
-  }
-}
-
-function save() {
-  localStorage.setItem(KEY, JSON.stringify(contents));
-}
-
-function esc(s = "") {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
-  }[c]));
-}
-
-function showNotice(s) {
-  const n = document.getElementById("notice");
-  n.textContent = s;
-  n.classList.remove("hidden");
-}
-
-function showTab(id) {
-  document.querySelectorAll("main>section").forEach(s =>
-    s.classList.toggle("hidden", s.id !== id)
-  );
-  document.querySelectorAll(".tab").forEach(b =>
-    b.classList.toggle("active", b.dataset.tab === id)
-  );
-  if (id === "criar" && !document.getElementById("editId").value) {
-    document.getElementById("title").focus();
-  }
-  render();
-}
-
-document.querySelectorAll(".tab").forEach(b =>
-  b.addEventListener("click", () => showTab(b.dataset.tab))
-);
-
-function card(c) {
-  return `<article class="item">
-    <div class="itemtop">
-      <h3>${esc(c.title)}</h3><span class="pill">${esc(c.status)}</span>
-    </div>
-    <p class="small">${esc(c.type)}${c.planned ? " · " + esc(c.planned.replace("T"," ")) : ""}</p>
-    ${c.description ? `<p>${esc(c.description)}</p>` : ""}
-    ${c.hashtags ? `<p class="small">${esc(c.hashtags)}</p>` : ""}
-    ${c.url ? `<p><a href="${esc(c.url)}" target="_blank" rel="noopener">Abrir vídeo</a></p>` : ""}
-    ${c.notes ? `<p class="small">Notas: ${esc(c.notes)}</p>` : ""}
-    <p class="small">Visualizações registradas: ${Number(c.views)||0} · Inscritos atribuídos: ${Number(c.subs)||0}</p>
-    <div class="actions">
-      <button class="gold" onclick="editItem(${Number(c.id)})">Editar</button>
-      ${c.status !== "Publicado" ? `<button class="secondary" onclick="setStatus(${Number(c.id)},'Aguardando aprovação')">Enviar para aprovação</button>
-      <button class="green" onclick="setStatus(${Number(c.id)},'Aprovado')">Aprovar</button>
-      <button class="secondary" onclick="setStatus(${Number(c.id)},'Publicado')">Marcar publicado</button>` : ""}
-      <button class="danger" onclick="deleteItem(${Number(c.id)})">Excluir</button>
-    </div>
-    <div class="formgrid">
-      <div><label>Status</label>
-        <select onchange="setStatus(${Number(c.id)},this.value)">
-          ${["Ideia","Rascunho","Aguardando aprovação","Aprovado","Publicado"].map(s =>
-            `<option ${c.status===s?"selected":""}>${s}</option>`).join("")}
-        </select>
-      </div>
-      <div><label>Visualizações registradas</label>
-        <input type="number" min="0" value="${Number(c.views)||0}"
-          onchange="metric(${Number(c.id)},'views',this.value)">
-      </div>
-      <div><label>Inscritos atribuídos</label>
-        <input type="number" min="0" value="${Number(c.subs)||0}"
-          onchange="metric(${Number(c.id)},'subs',this.value)">
-      </div>
-    </div>
-  </article>`;
-}
-
-function render() {
-  document.getElementById("total").textContent = contents.length;
-  document.getElementById("pending").textContent =
-    contents.filter(c => c.status === "Aguardando aprovação").length;
-  document.getElementById("views").textContent =
-    contents.reduce((a,c) => a + (Number(c.views)||0),0).toLocaleString("pt-BR");
-  document.getElementById("subs").textContent =
-    contents.reduce((a,c) => a + (Number(c.subs)||0),0).toLocaleString("pt-BR");
-
-  const sorted = [...contents].sort((a,b) =>
-    (a.planned||"9999").localeCompare(b.planned||"9999")
-  );
-
-  document.getElementById("nextitems").innerHTML =
-    sorted.slice(0,4).map(card).join("") ||
-    '<div class="empty">Nenhum conteúdo cadastrado.</div>';
-
-  const st = document.getElementById("filterStatus")?.value || "";
-  const ty = document.getElementById("filterType")?.value || "";
-  const filtered = sorted.filter(c =>
-    (!st || c.status === st) && (!ty || c.type === ty)
-  );
-
-  document.getElementById("allitems").innerHTML =
-    filtered.map(card).join("") ||
-    '<div class="panel empty">Nenhum conteúdo corresponde ao filtro.</div>';
-}
-
-function resetForm() {
-  document.getElementById("contentForm").reset();
-  document.getElementById("editId").value = "";
-  document.getElementById("formtitle").textContent = "Cadastrar conteúdo";
-}
-
-document.getElementById("contentForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const id = document.getElementById("editId").value;
-  const old = contents.find(c => String(c.id) === String(id));
-
-  const c = {
-    id: id ? Number(id) : Date.now(),
-    title: document.getElementById("title").value.trim(),
-    type: document.getElementById("type").value,
-    status: document.getElementById("status").value,
-    planned: document.getElementById("planned").value,
-    description: document.getElementById("description").value.trim(),
-    hashtags: document.getElementById("hashtags").value.trim(),
-    url: document.getElementById("url").value.trim(),
-    notes: document.getElementById("notes").value.trim(),
-    views: old?.views || 0,
-    subs: old?.subs || 0,
-    created: old?.created || new Date().toISOString()
-  };
-
-  if (!c.title) return;
-  if (id) contents = contents.map(x => x.id === Number(id) ? c : x);
-  else contents.unshift(c);
-
-  save();
-  resetForm();
-  render();
-  showNotice("Conteúdo salvo neste aparelho.");
-  showTab("conteudos");
-});
-
-function editItem(id) {
-  const c = contents.find(x => x.id === id);
-  if (!c) return;
-  showTab("criar");
-  document.getElementById("editId").value = c.id;
-
-  const fields = {
-    title:"title", type:"type", status:"status", planned:"planned",
-    description:"description", hashtags:"hashtags", url:"url", notes:"notes"
-  };
-  Object.entries(fields).forEach(([k,id2]) =>
-    document.getElementById(id2).value = c[k] || ""
-  );
-  document.getElementById("formtitle").textContent = "Editar conteúdo";
-}
-
-function setStatus(id,s) {
-  const c = contents.find(x => x.id === id);
-  if (c) {
-    c.status = s;
-    save();
-    render();
-    showNotice("Status atualizado: " + s);
-  }
-}
-
-function metric(id,k,v) {
-  const c = contents.find(x => x.id === id);
-  if (c) {
-    c[k] = Math.max(0,parseInt(v||"0",10)||0);
-    save();
-    render();
-  }
-}
-
-function deleteItem(id) {
-  if (confirm("Excluir este conteúdo?")) {
-    contents = contents.filter(c => c.id !== id);
-    save();
-    render();
-    showNotice("Conteúdo excluído.");
-  }
-}
-
-function generateText() {
-  const topic = document.getElementById("genTopic").value.trim() ||
-    "uma missão intensa em Ghost Recon Wildlands";
-  const type = document.getElementById("genType").value;
-  let title, desc;
-
-  if (type === "Short") {
-    title = topic.toLowerCase().includes("660")
-      ? "🎯 ACERTEI O ALVO A MAIS DE 660 METROS!"
-      : "🔥 VOCÊ NÃO VAI ACREDITAR NESTE MOMENTO!";
-    desc = `O momento mais intenso de ${topic} em Ghost Recon Wildlands!\n\nAssista até o final e comente: você teria feito diferente?\nAcompanhe o canal para mais missões.\n\n#GhostReconWildlands #Shorts #Games`;
-  } else if (type === "Live") {
-    title = "🔴 AO VIVO: " + topic.toUpperCase();
-    desc = `Vamos encarar ${topic} em Ghost Recon Wildlands! Entre na live e participe do chat.\n\nInscreva-se para acompanhar as próximas transmissões.\n\n#GhostReconWildlands #AoVivo #Gameplay`;
-  } else if (type === "Post de divulgação") {
-    title = "🎮 NOVO CONTEÚDO NO YOUTUBE!";
-    desc = `Quer ver ${topic}? Estou levando a gameplay para o YouTube! Acesse meu canal e participe da tropa.\n\n#GhostReconWildlands #Gameplay #YouTube`;
-  } else {
-    title = "🎯 " + topic.toUpperCase() + " | GHOST RECON WILDLANDS";
-    desc = `Hoje a missão é ${topic}. Veja os momentos decisivos e o resultado em Ghost Recon Wildlands.\n\nComente sua parte favorita e inscreva-se para acompanhar as próximas operações.\n\n#GhostReconWildlands #Gameplay #Games`;
-  }
-
-  document.getElementById("generated").value = title + "\n\n" + desc;
-  showNotice("Sugestão gerada. Revise antes de usar.");
-}
-
-async function copyGenerated() {
-  const v = document.getElementById("generated").value;
-  if (!v) {
-    showNotice("Gere um texto primeiro.");
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(v);
-    showNotice("Texto copiado.");
-  } catch(e) {
-    document.getElementById("generated").select();
-    showNotice("Selecione e copie o texto manualmente.");
-  }
-}
-
-function download(name,content,type) {
-  const blob = new Blob([content],{type});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href),1000);
-}
-
-function exportData() {
-  download("youtube-booster-backup.json",JSON.stringify(contents,null,2),"application/json");
-}
-
-function importData(ev) {
-  const f = ev.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(r.result);
-      if (!Array.isArray(d)) throw Error();
-      if (confirm("Substituir os conteúdos atuais pelo backup?")) {
-        contents = d;
-        save();
-        render();
-        showNotice("Backup importado.");
-      }
-    } catch(e) {
-      showNotice("Arquivo de backup inválido.");
-    }
-    ev.target.value = "";
-  };
-  r.readAsText(f);
-}
-
-function exportCSV() {
-  const cols = ["title","type","status","planned","description","hashtags","url","views","subs","notes"];
-  const csv = [
-    cols.join(";"),
-    ...contents.map(c => cols.map(k =>
-      '"' + String(c[k] ?? "").replace(/"/g,'""') + '"'
-    ).join(";"))
-  ].join("\r\n");
-  download("youtube-booster-conteudos.csv","\ufeff"+csv,"text/csv;charset=utf-8");
-}
-
-/* Integração de leitura com a API do YouTube */
-function conectarYouTube() {
-  window.location.href = API + "/login";
-}
-
-function abrirStatusAPI() {
-  window.open(API + "/", "_blank", "noopener");
-}
-
-async function carregarDadosYouTube() {
-  const status = document.getElementById("youtubeConnectionStatus");
-  status.className = "connection";
-  status.textContent = "Consultando canal do YouTube...";
-
-  try {
-    const resposta = await fetch(API + "/api/canal", {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store"
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-      status.classList.add("status-error");
-      status.textContent = dados.erro ||
-        "Conexão não disponível. Clique em Conectar YouTube.";
-      return;
-    }
-
-    const stats = dados.estatisticas || {};
-    document.getElementById("ytSubscribers").textContent =
-      Number(stats.subscriberCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytViews").textContent =
-      Number(stats.viewCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytVideos").textContent =
-      Number(stats.videoCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytChannel").textContent = dados.canal || "Conectado";
-
-    status.classList.add("status-ok");
-    status.textContent = "Conectado ao canal: " + (dados.canal || "YouTube");
-  } catch (erro) {
-    console.error("Erro ao consultar API do YouTube:", erro);
-    status.classList.add("status-error");
-    status.textContent =
-      "Não foi possível consultar a API. Pode haver bloqueio de cookies ou CORS. Tente conectar novamente.";
-  }
-}
-
-load();
-render();
-carregarDadosYouTube();
-</script>
-</body>
-</html>
