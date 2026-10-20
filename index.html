@@ -562,52 +562,167 @@ function deleteItem(id) {
   }
 }
 
+
 function generateText() {
-  const topic = document.getElementById("genTopic").value.trim() ||
-    "uma missão intensa em Ghost Recon Wildlands";
-  const type = document.getElementById("genType").value;
-  const t = topic.toLowerCase();
-  let title, desc, hook, thumb;
+  const chaveHistorico = "youtube_booster_gerados_v2";
 
-  if (t.includes("660") || t.includes("sniper") || t.includes("tiro")) {
-    title = "🎯 ACERTEI O ALVO A MAIS DE 660 METROS!";
-    hook = "“Mais de 660 metros… será que esse tiro vai acertar?”";
-    thumb = "Personagem destacado à esquerda, mira no alvo ao fundo, distância em amarelo e contorno branco forte.";
-  } else if (t.includes("erro") || t.includes("falh") || t.includes("descobert")) {
-    title = "🔥 UM ERRO E A MISSÃO VIROU UM CAOS!";
-    hook = "“Era para ser uma infiltração silenciosa… olha o que aconteceu!”";
-    thumb = "Soldado sob fogo, alerta vermelho, texto branco e amarelo: DEU TUDO ERRADO!";
-  } else if (t.includes("base") || t.includes("infiltra")) {
-    title = "🚨 INVADIMOS UMA DAS BASES MAIS PERIGOSAS!";
-    hook = "“Se eles nos encontrarem aqui, acabou a missão!”";
-    thumb = "Base ao fundo, personagem em destaque, seta vermelha indicando a entrada e texto de alto contraste.";
-  } else {
-    title = "🔥 VOCÊ NÃO VAI ACREDITAR NESTE MOMENTO!";
-    hook = "“Olha isso! Você teria coragem de tentar?”";
-    thumb = "Personagem à esquerda, ação ao fundo, poucas palavras grandes e contorno branco.";
+  const titulos = [
+    "🔥 VOCÊ NÃO VAI ACREDITAR NO QUE ACONTECEU!",
+    "🎯 O TIRO MAIS INSANO DE GHOST RECON WILDLANDS!",
+    "🚨 ESSA MISSÃO SAIU DO CONTROLE!",
+    "😱 EU NÃO ESPERAVA POR ESSE RESULTADO!",
+    "💥 A OPERAÇÃO MAIS PERIGOSA DA BOLÍVIA!",
+    "🎯 SERÁ QUE EU CONSIGO ACERTAR ESSE ALVO?",
+    "🔥 UM ERRO E TUDO VIROU UM CAOS!",
+    "⚠️ ENTREI NA BASE E ME ARREPENDI!",
+    "🎮 VOCÊ TERIA CORAGEM DE FAZER ISSO?",
+    "💀 A MISSÃO MAIS TENS A ATÉ AGORA!",
+    "🪖 INFILTRAÇÃO SILENCIOSA... SERÁ QUE VAI DAR CERTO?",
+    "🔭 UM ALVO, UM TIRO E NENHUMA SEGUNDA CHANCE!",
+    "🚁 O HELICÓPTERO MUDOU TODA A MISSÃO!",
+    "👀 OLHA O QUE DESCOBRI NESSA BASE!",
+    "💣 QUASE COLOQUEI TUDO A PERDER!"
+  ];
+
+  const ganchos = [
+    "Pera aí... você viu isso?",
+    "Essa missão pode dar muito errado!",
+    "Olha onde esse tiro vai parar!",
+    "Eu não esperava que isso acontecesse!",
+    "Será que vou conseguir sair dessa?",
+    "Presta atenção nesse momento!",
+    "Um pequeno erro mudou tudo!",
+    "Você teria coragem de tentar?",
+    "Olha o que aconteceu nessa missão!",
+    "Fica até o final para ver o resultado!",
+    "Será que alguém vai perceber minha presença?",
+    "A próxima decisão pode acabar com tudo!",
+    "Eu tinha apenas uma chance!",
+    "Olha o tamanho do problema que apareceu!",
+    "Você faria diferente nessa situação?"
+  ];
+
+  const descricoes = [
+    "Uma missão intensa em Ghost Recon Wildlands! Assista até o final e conte nos comentários o que você faria nessa situação.",
+    "Mais um desafio em Ghost Recon Wildlands! Será que essa operação vai terminar como planejado? Comente sua estratégia!",
+    "Confira esse momento da gameplay de Ghost Recon Wildlands. Você teria feito algo diferente? Quero saber sua opinião!",
+    "A Bolívia está cheia de desafios em Ghost Recon Wildlands! Acompanhe a missão e diga nos comentários seu próximo movimento.",
+    "Gameplay de Ghost Recon Wildlands com ação, estratégia e muita tensão. Assista e compartilhe sua opinião!",
+    "Cada decisão importa nesta missão de Ghost Recon Wildlands. Comente como você enfrentaria esse desafio!",
+    "Mais um trecho da nossa jornada em Ghost Recon Wildlands. Qual seria sua estratégia nesta situação?",
+    "A missão continua na Bolívia! Veja este momento de Ghost Recon Wildlands e participe nos comentários."
+  ];
+
+  const thumbnails = [
+    "Personagem à esquerda, inimigos ao fundo e texto grande em branco e amarelo.",
+    "Sniper em destaque, alvo ao longe e cenário de ação.",
+    "Personagem em primeiro plano, base inimiga ao fundo e seta vermelha.",
+    "Cena de combate, personagem destacado e texto curto com contorno branco.",
+    "Helicóptero ao fundo, personagem à esquerda e destaque na ação principal.",
+    "Base inimiga ao fundo, personagem mirando e texto amarelo de alto contraste.",
+    "Close do personagem, perigo ao fundo e poucas palavras em letras grandes.",
+    "Paisagem da Bolívia, inimigo destacado e contorno branco nos elementos principais."
+  ];
+
+  function embaralhar(lista) {
+    const copia = [...lista];
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
   }
 
-  if (type === "Short") {
-    desc = `O momento de ${topic} em Ghost Recon Wildlands!\n\n${hook}\nAssista até o final e comenta: você faria diferente?\n\n#GhostReconWildlands #Shorts #Gameplay`;
-  } else if (type === "Live") {
-    title = "🔴 AO VIVO: " + topic.toUpperCase() + " | GHOST RECON WILDLANDS";
-    hook = "“Hoje temos uma missão: completar a operação juntos!”";
-    desc = `Estamos ao vivo jogando Ghost Recon Wildlands!\nMissão de hoje: ${topic}.\nEntre no chat, participe e acompanhe a operação.\n\nInscreva-se para não perder as próximas lives.\n#GhostReconWildlands #AoVivo #Gameplay`;
-    thumb = "Personagem armado, objetivo da missão em letras grandes e selo AO VIVO em vermelho.";
-  } else if (type === "Post de divulgação") {
-    title = "🎮 NOVA GAMEPLAY NO YOUTUBE!";
-    hook = "“A tropa, a missão já começou. Vem assistir!”";
-    desc = `Quer acompanhar ${topic}?\nA gameplay está no YouTube! Acesse o canal Mister Kenne e participe da tropa.\n\n#GhostReconWildlands #Gameplay #YouTube`;
-    thumb = "Arte vertical para redes sociais, nome do jogo e chamada clara para assistir no YouTube.";
-  } else {
-    title = title + " | GHOST RECON WILDLANDS";
-    desc = `Confira a operação: ${topic}.\nVeja os momentos decisivos, a estratégia e o resultado em Ghost Recon Wildlands.\n\nComente sua parte favorita e inscreva-se para acompanhar as próximas missões.\n#GhostReconWildlands #Gameplay #Games`;
+  let historico = [];
+
+  try {
+    const salvo = localStorage.getItem(chaveHistorico);
+    historico = salvo ? JSON.parse(salvo) : [];
+    if (!Array.isArray(historico)) historico = [];
+  } catch (erro) {
+    alert("Não consegui ler o histórico salvo. Verifique o armazenamento do navegador.");
+    return;
   }
 
-  document.getElementById("generated").value =
-    `TÍTULO:\n${title}\n\nDESCRIÇÃO:\n${desc}\n\nGANCHO — PRIMEIROS 3 SEGUNDOS:\n${hook}\n\nIDEIA DE THUMBNAIL:\n${thumb}\n\nLEMBRETE: use a sugestão apenas se corresponder ao que realmente acontece no vídeo.`;
-  showNotice("Sugestão pronta. Revise antes de publicar.");
+  const usados = new Set(
+    historico.map(item => item.chave).filter(Boolean)
+  );
+
+  // Gera combinações de título, gancho, descrição e thumbnail.
+  // A ordem é embaralhada para não começar sempre pela mesma opção.
+  const opcoesTitulo = embaralhar(titulos);
+  const opcoesGancho = embaralhar(ganchos);
+  const opcoesDescricao = embaralhar(descricoes);
+  const opcoesThumbnail = embaralhar(thumbnails);
+
+  let escolhida = null;
+
+  busca:
+  for (const titulo of opcoesTitulo) {
+    for (const gancho of opcoesGancho) {
+      for (const descricao of opcoesDescricao) {
+        for (const thumbnail of opcoesThumbnail) {
+          const chave = [titulo, gancho, descricao, thumbnail].join("|||");
+
+          if (!usados.has(chave)) {
+            escolhida = {
+              titulo,
+              gancho,
+              descricao,
+              thumbnail,
+              chave
+            };
+            break busca;
+          }
+        }
+      }
+    }
+  }
+
+  if (!escolhida) {
+    alert(
+      "As combinações disponíveis deste gerador já foram usadas. " +
+      "Precisamos adicionar novas opções para continuar criando combinações inéditas."
+    );
+    return;
+  }
+
+  const tituloEl = document.getElementById("genTitle");
+  const descricaoEl = document.getElementById("genDesc");
+  const ganchoEl = document.getElementById("genHook");
+  const thumbnailEl = document.getElementById("genThumb");
+
+  if (!tituloEl || !descricaoEl || !ganchoEl || !thumbnailEl) {
+    alert(
+      "Não encontrei todos os campos do gerador. " +
+      "Precisamos conferir os IDs no HTML antes de continuar."
+    );
+    return;
+  }
+
+  tituloEl.value = escolhida.titulo;
+  descricaoEl.value =
+    escolhida.descricao +
+    "\n\n#GhostReconWildlands #Shorts #Gameplay";
+  ganchoEl.value = escolhida.gancho;
+  thumbnailEl.value = escolhida.thumbnail;
+
+  historico.push({
+    chave: escolhida.chave,
+    titulo: escolhida.titulo,
+    data: new Date().toISOString()
+  });
+
+  try {
+    localStorage.setItem(chaveHistorico, JSON.stringify(historico));
+  } catch (erro) {
+    alert(
+      "O conteúdo foi gerado, mas não consegui salvar o histórico. " +
+      "O navegador pode estar sem espaço disponível."
+    );
+  }
 }
+
 
 async function copyGenerated() {
   const v = document.getElementById("generated").value;
