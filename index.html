@@ -589,8 +589,23 @@ async function connectChannel(){
    throw new Error("O servidor respondeu com HTTP "+response.status);
   }
 
-  $("channelResult").textContent=JSON.stringify(data,null,2);
-  showNotice("Resposta recebida do backend.");
+  
+$("channelResult").textContent = JSON.stringify(data, null, 2);
+
+const stats = data.estatisticas || data.statistics || {};
+const inscritos = Number(stats.subscriberCount);
+const visualizacoes = Number(stats.viewCount);
+
+if (Number.isFinite(inscritos)) {
+  $("statSubs").textContent = inscritos.toLocaleString("pt-BR");
+}
+
+if (Number.isFinite(visualizacoes)) {
+  $("statViews").textContent = visualizacoes.toLocaleString("pt-BR");
+}
+
+showNotice("Canal consultado e painel atualizado!");
+
  }catch(e){
   $("channelResult").textContent="Não foi possível consultar o canal. Confira se o backend está ativo e se o CORS permite esta página. Detalhe: "+e.message;
   showNotice("Falha ao consultar o canal.");
