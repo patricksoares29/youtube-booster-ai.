@@ -189,6 +189,135 @@ def consultar_canal(access_token):
     return canais[0], 200
 
 
+def consultar_videos(access_token, max_results=20):
+    """Busca vídeos recentes e suas estatísticas."""
+
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    response = requests.get(
+        "https://www.googleapis.com/youtube/v3/channels",
+        params={
+            "part": "contentDetails",
+            "mine": "true",
+        },
+        headers=headers,
+        timeout=30,
+    )
+
+    if not response.ok:
+        app.logger.error(
+            "Falha ao buscar playlist: HTTP %s",
+            response.status_code,
+        )
+        return None, response.status_code
+
+    canais = response.json().get("items", [])
+
+    if not canais:
+        return [], 200
+
+    uploads_id = (
+        canais[0]
+        .get("contentDetails", {})
+        .get("relatedPlaylists", {})
+        .get("uploads")
+    )
+
+    if not uploads_id:
+        return [], 200
+
+    response = requests.get(
+        "https://www.googleapis.com/youtube/v3/playlistItems",
+        params={
+            "part": "snippet,contentDetails",
+            "playlistId": uploads_id,
+            "maxResults": max(1, min(int(max_results), 50)),
+        },
+        headers=headers,
+        timeout=30,
+    )
+
+    if not response.ok:
+        app.logger.error(
+            "Falha ao buscar vídeos: HTTP %s",
+            response.status_code,
+        )
+        return None, response.status_code
+
+    itens = response.json().get("items", [])
+
+    ids = [
+        item.get("contentDetails", {}).get("videoId")
+        for item in itens
+    ]
+    ids = [video_id for video_id in ids if video_id]
+
+    if not ids:
+        return [], 200
+
+    response = requests.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        params={
+            "part": "snippet,statistics,contentDetails",
+            "id": ",".join(ids),
+        },
+        headers=headers,
+        timeout=30,
+    )
+
+    if not response.ok:
+        app.logger.error(
+            "Falha ao buscar estatísticas: HTTP %s",
+            response.status_code,
+        )
+        return None, response.status_code
+
+    videos_api = {
+        video["id"]: video
+        for video in response.json().get("items", [])
+    }
+
+    videos = []
+
+    for item in itens:
+        video_id = item.get("contentDetails", {}).get("videoId")
+        video = videos_api.get(video_id)
+
+        if not video:
+            continue
+
+        snippet = video.get("snippet", {})
+        stats = video.get("statistics", {})
+        details = video.get("contentDetails", {})
+
+        videos.append({
+            "id": video_id,
+            "titulo": snippet.get("title", ""),
+            "publicado_em": snippet.get("publishedAt", ""),
+            "url": (
+                f"https://www.youtube.com/watch?v={video_id}"
+            ),
+            "miniatura": (
+                snippet.get("thumbnails", {})
+                .get("medium", {})
+                .get("url", "")
+            ),
+            "duracao": details.get("duration", ""),
+            "visualizacoes": int(stats.get("viewCount", 0)),
+            "curtidas": (
+                int(stats["likeCount"])
+                if "likeCount" in stats else None
+            ),
+            "comentarios": (
+                int(stats["commentCount"])
+                if "commentCount" in stats else None
+            ),
+        })
+
+    return videos, 200
+
 @app.route("/")
 def home():
     return jsonify({
