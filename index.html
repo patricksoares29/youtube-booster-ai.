@@ -231,8 +231,15 @@ function init(){
 
 function updateDashboard(){
  const last=metrics[metrics.length-1];
- $("statSubs").textContent=last?Number(last.subs).toLocaleString("pt-BR"):"—";
- $("statViews").textContent=last?Number(last.views).toLocaleString("pt-BR"):"—";
+ 
+$("statSubs").textContent = last && Number.isFinite(Number(last.subs)) && last.subs !== "" && last.subs != null
+  ? Number(last.subs).toLocaleString("pt-BR")
+  : "—";
+
+$("statViews").textContent = last && Number.isFinite(Number(last.views)) && last.views !== "" && last.views != null
+  ? Number(last.views).toLocaleString("pt-BR")
+  : "—";
+
  $("statPlans").textContent=contents.length;
  $("statIdeas").textContent=contents.filter(c=>c.status==="Ideia").length;
 }
