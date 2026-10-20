@@ -323,7 +323,19 @@ function saveApi(){
  const url=$("apiBase").value.trim().replace(/\/+$/,"");
  localStorage.setItem("youtube_booster_api",url);showNotice("Endereço do backend salvo.");
 }
-async function connectChannel(){
+function loginYouTube() {
+  saveApi();
+
+  const base = $("apiBase").value.trim().replace(/\/+$/, "");
+
+  if (!base) {
+    showNotice("Informe o endereço do backend.");
+    return;
+  }
+
+  window.location.href = base + "/login";
+}
+ async function connectChannel(){
  saveApi();
  const base=localStorage.getItem("youtube_booster_api");
  if(!base)return showNotice("Informe o endereço do backend.");
