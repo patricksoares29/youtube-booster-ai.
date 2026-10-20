@@ -758,8 +758,7 @@ function analisarDesempenhoVideos() {
   const resultados = cartoes.map(function(cartao) {
     const titulo = cartao.querySelector("h3")?.textContent || "Vídeo sem título";
     const detalhes = cartao.querySelector("p")?.textContent || "";
-    const match = detalhes.match(/Visualizações:\s*([\d.]+)/);
-
+    const match = detalhes.match(/Visualizações:\s*([\d.,]+)/);
     return {
       titulo: titulo,
       visualizacoes: match
