@@ -361,6 +361,50 @@ def dados_canal():
         }), 503
 
 
+@app.route("/api/videos")
+def dados_videos():
+    connection_id = session.get("connection_id")
+
+    try:
+        tokens = obter_tokens_validos(connection_id)
+
+        if not tokens:
+            return jsonify({
+                "erro": "Conecte novamente sua conta do YouTube.",
+                "login": "/login",
+            }), 401
+
+        videos, status = consultar_videos(
+            tokens["access_token"],
+            max_results=20,
+        )
+
+        if videos is None:
+            return jsonify({
+                "erro": "Não foi possível consultar os vídeos."
+            }), status
+
+        return jsonify({
+            "quantidade": len(videos),
+            "videos": videos,
+        })
+
+    except requests.RequestException:
+        app.logger.exception(
+            "Falha de comunicação ao consultar os vídeos"
+        )
+        return jsonify({
+            "erro": "Falha de comunicação com o YouTube."
+        }), 502
+
+    except (psycopg2.Error, RuntimeError):
+        app.logger.exception(
+            "Falha ao recuperar tokens para consultar vídeos"
+        )
+        return jsonify({
+            "erro": "Não foi possível acessar a conexão salva."
+        }), 503
+
 @app.route("/api/status-conexao")
 def status_conexao():
     connection_id = session.get("connection_id")
