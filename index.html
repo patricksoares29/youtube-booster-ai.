@@ -421,16 +421,21 @@ function changeStatus(id){
 }
 
 function changeStatusSelect(id, status){
- const c = contents.find(x => x.id === id);
- if (!c) return;
+  const c = contents.find(x => x.id === id);
+  if (!c) return;
 
- const statuses = ["Ideia", "Planejado", "Publicado"];
- if (!statuses.includes(status)) return;
+  const statuses = ["Ideia", "Planejado", "Publicado"];
+  if (!statuses.includes(status)) return;
 
- c.status = status;
-save();
-renderContents();
-showNotice("Status atualizado: " + c.status);
+  c.status = status;
+  save();
+
+  const select = document.querySelector(
+    `.status-select`
+  );
+
+  renderContents();
+  showNotice("Status atualizado: " + c.status);
 }
 
 function deleteContent(id){
