@@ -1,959 +1,345 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#15161c">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YouTube Booster AI</title>
 <style>
-:root {
-  --bg:#101116;
-  --panel:#1b1d25;
-  --panel2:#242631;
-  --line:#343744;
-  --text:#f5f6fa;
-  --muted:#aeb2c0;
-  --red:#e53935;
-  --gold:#ffc857;
-  --green:#5bd39a;
-}
-* { box-sizing:border-box }
-body {
-  margin:0;background:var(--bg);color:var(--text);
-  font:15px system-ui,-apple-system,Segoe UI,Arial
-}
-header {
-  padding:22px 16px 18px;
-  background:linear-gradient(125deg,#38191b,#171923 70%);
-  border-bottom:1px solid var(--line)
-}
-.wrap { max-width:1100px;margin:auto;padding:16px }
-h1 { font-size:24px;margin:0 0 5px }
-h2 { font-size:18px;margin:0 0 13px }
-h3 { font-size:16px;margin:0 }
-p { color:var(--muted);margin:5px 0;line-height:1.45 }
-.topline { display:flex;align-items:center;gap:12px }
-.logo {
-  width:48px;height:48px;display:grid;place-items:center;
-  background:var(--red);border-radius:14px;font-size:24px
-}
-nav { display:flex;gap:8px;overflow:auto;padding:12px 0 2px }
-.tab {
-  background:var(--panel2);border:1px solid var(--line);
-  color:var(--text);border-radius:10px;padding:10px 12px;
-  white-space:nowrap;cursor:pointer
-}
-.tab.active { background:var(--red);border-color:var(--red) }
-.grid {
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;margin:14px 0
-}
-.stat,.panel,.item {
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:15px;padding:14px
-}
-.stat strong { display:block;font-size:26px;overflow-wrap:anywhere }
-.stat span { font-size:12px;color:var(--muted) }
-label { display:block;color:var(--muted);font-size:13px;margin:9px 0 5px }
-input,textarea,select {
-  width:100%;background:#101116;border:1px solid #3b3e4b;
-  border-radius:9px;color:var(--text);padding:11px;font:inherit
-}
-input[type=checkbox] { width:auto;display:inline-block;margin-right:6px }
-textarea { min-height:85px;resize:vertical }
-.formgrid { display:grid;grid-template-columns:1fr 1fr;gap:8px }
-.full { grid-column:1/-1 }
-button,.btn {
-  display:inline-block;background:var(--red);color:white;border:0;
-  border-radius:9px;padding:11px 13px;font-weight:700;
-  text-decoration:none;cursor:pointer;font-size:14px
-}
-.secondary { background:#303340 }
-.gold { background:var(--gold);color:#1b1b1b }
-.green { background:#1c6348 }
-.danger { background:#632d32 }
-.actions { display:flex;gap:7px;flex-wrap:wrap;margin-top:12px }
-.items { display:grid;gap:10px }
-.itemtop {
-  display:flex;justify-content:space-between;gap:8px;align-items:start
-}
-.pill {
-  font-size:11px;border:1px solid #626779;border-radius:99px;
-  padding:4px 8px;color:var(--gold);white-space:nowrap
-}
-.small {
-  font-size:12px;color:var(--muted);white-space:pre-wrap;
-  overflow-wrap:anywhere
-}
-.filters { display:flex;gap:8px;flex-wrap:wrap }
-.filters select { max-width:220px }
-.notice {
-  padding:11px;border-radius:10px;background:#2d2f39;
-  margin:12px 0;color:var(--gold)
-}
-.hidden { display:none!important }
-.empty { padding:18px;text-align:center;color:var(--muted) }
-.row { display:flex;gap:8px;flex-wrap:wrap }
-.row>* { flex:1 }
-.section-head {
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;margin-bottom:12px
-}
-.helper {
-  border-left:3px solid var(--gold);padding:8px 10px;
-  background:#24232a;border-radius:0 8px 8px 0;
-  font-size:13px;color:#e6e2d8
-}
-.connection {
-  padding:10px;border-radius:9px;background:#242631;
-  margin:8px 0;overflow-wrap:anywhere
-}
-.status-ok { color:var(--green) }
-.status-error { color:#ff8b8b }
-.chart {
-  display:flex;align-items:end;gap:7px;height:150px;
-  padding:12px 4px 0;border-bottom:1px solid var(--line)
-}
-.bar {
-  flex:1;min-width:8px;background:var(--red);
-  border-radius:5px 5px 0 0;position:relative
-}
-.bar span {
-  position:absolute;bottom:100%;left:50%;
-  transform:translateX(-50%);font-size:10px;color:var(--muted)
-}
-.bar-labels { display:flex;gap:7px;margin-top:5px }
-.bar-labels span {
-  flex:1;min-width:0;text-align:center;font-size:10px;color:var(--muted)
-}
-.idea { border:1px solid var(--line);padding:12px;border-radius:12px }
-@media(min-width:760px) {
-  .grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
-  .items { grid-template-columns:1fr 1fr }
-}
-@media(max-width:480px) {
-  .formgrid { grid-template-columns:1fr }
-  .full { grid-column:auto }
-  .itemtop { display:block }
-  .pill { display:inline-block;margin-top:7px }
-  .wrap { padding:12px }
-}
+:root{--bg:#0b1020;--panel:#131b2e;--panel2:#19243b;--text:#f4f7ff;--muted:#9eacc7;--blue:#4387ff;--green:#20c997;--border:#293650;--red:#ff647c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}
+header{padding:22px 16px;background:#10182a;border-bottom:1px solid var(--border)}
+header h1{margin:0 0 7px;font-size:25px}
+header p{margin:0;color:var(--muted)}
+main{max-width:1150px;margin:auto;padding:18px}
+nav{display:flex;gap:8px;overflow-x:auto;padding:12px 0 18px}
+nav button{white-space:nowrap}
+button{border:0;border-radius:9px;background:var(--blue);color:white;font-weight:bold;padding:11px 14px;cursor:pointer}
+button.secondary{background:#2a3854}
+button.green{background:#168d6b}
+button.red{background:#a93650}
+button.active{outline:2px solid white}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:15px}
+h2{font-size:21px;margin:0 0 14px}
+h3{margin:0 0 9px}
+p,.muted{color:var(--muted);line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}
+.stat{background:var(--panel2);border-radius:12px;padding:16px}
+.stat strong{display:block;font-size:27px;margin:8px 0}
+label{display:block;margin:14px 0 7px;font-weight:bold}
+input,select,textarea{width:100%;padding:12px;background:#0d1526;color:var(--text);border:1px solid var(--border);border-radius:8px;font:inherit}
+textarea{min-height:160px;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.item{border:1px solid var(--border);background:#10192b;padding:14px;border-radius:10px;margin:10px 0}
+.item h3{margin-bottom:7px}
+.item p{white-space:pre-wrap;overflow-wrap:anywhere}
+.small{font-size:12px;color:var(--muted)}
+.notice{padding:12px;border-radius:9px;background:#123b35;color:#9ef2d8;margin:10px 0;display:none}
+hr{border:0;border-top:1px solid var(--border);margin:16px 0}
+footer{text-align:center;color:var(--muted);padding:25px}
+a{color:#8cb5ff}
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <div class="topline">
-      <div class="logo">▶</div>
-      <div>
-        <h1>YouTube Booster AI</h1>
-        <p>Planeje melhor. Publique com estratégia. Cresça com dados.</p>
-      </div>
-    </div>
-    <nav>
-      <button class="tab active" data-tab="painel">Painel</button>
-      <button class="tab" data-tab="desempenho">Desempenho</button>
-      <button class="tab" data-tab="conteudos">Conteúdos</button>
-      <button class="tab" data-tab="criar">Criar conteúdo</button>
-      <button class="tab" data-tab="calendario">Calendário</button>
-      <button class="tab" data-tab="estrategia">Estratégia</button>
-      <button class="tab" data-tab="backup">Backup</button>
-    </nav>
-  </div>
+<h1>🚀 YouTube Booster AI</h1>
+<p>Planeje conteúdos, organize suas ideias e acompanhe o crescimento do seu canal.</p>
 </header>
-<main class="wrap">
-  <div id="notice" class="notice hidden" role="status"></div>
-  <section id="painel">
-    <div class="panel">
-      <div class="section-head">
-        <h2>Estatísticas reais do YouTube</h2>
-        <button type="button" class="secondary" onclick="carregarDadosYouTube()">Atualizar</button>
-      </div>
-      <div id="youtubeConnectionStatus" class="connection">Consultando canal...</div>
-      <div class="grid">
-        <div class="stat"><strong id="ytSubscribers">—</strong><span>Inscritos</span></div>
-        <div class="stat"><strong id="ytViews">—</strong><span>Visualizações</span></div>
-        <div class="stat"><strong id="ytVideos">—</strong><span>Vídeos publicados</span></div>
-        <div class="stat"><strong id="ytChannel">—</strong><span>Canal conectado</span></div>
-      </div>
-      <div class="actions">
-        <button onclick="conectarYouTube()">Conectar YouTube</button>
-        <button class="secondary" onclick="abrirStatusAPI()">Verificar servidor</button>
-      </div>
-      <p class="small">Dados obtidos da API do YouTube. Os históricos começam a partir das consultas registradas neste painel.</p>
-    </div>
-    <div class="grid">
-      <div class="stat"><strong id="total">0</strong><span>Conteúdos planejados</span></div>
-      <div class="stat"><strong id="pending">0</strong><span>Aguardando aprovação</span></div>
-      <div class="stat"><strong id="views">0</strong><span>Visualizações manuais</span></div>
-      <div class="stat"><strong id="subs">0</strong><span>Inscritos atribuídos manualmente</span></div>
-    </div>
-    <div class="panel">
-      <div class="section-head">
-        <h2>Próximas publicações</h2>
-        <button onclick="showTab('criar')">＋ Adicionar</button>
-      </div>
-      <div id="nextitems" class="items"></div>
-    </div>
-  </section>
-  <section id="desempenho" class="hidden">
-    <div class="panel">
-      <h2>Histórico de desempenho do canal</h2>
-      <p>Uma medição é registrada quando os dados reais do canal são carregados com sucesso.</p>
-      <div class="grid">
-        <div class="stat"><strong id="historyCount">0</strong><span>Medições salvas</span></div>
-        <div class="stat"><strong id="growthSubs">—</strong><span>Variação de inscritos</span></div>
-        <div class="stat"><strong id="growthViews">—</strong><span>Variação de visualizações</span></div>
-        <div class="stat"><strong id="growthVideos">—</strong><span>Variação de vídeos</span></div>
-      </div>
-      <h3>Visualizações registradas</h3>
-      <div id="viewsChart" class="chart"></div>
-      <div id="viewsLabels" class="bar-labels"></div>
-      <h3 style="margin-top:22px">Inscritos registrados</h3>
-      <div id="subsChart" class="chart"></div>
-      <div id="subsLabels" class="bar-labels"></div>
-      <div class="actions">
-        <button onclick="exportHistory()">Exportar histórico</button>
-        <button class="secondary" onclick="clearHistory()">Limpar histórico</button>
-      </div>
-      <p class="small">O YouTube fornece os totais atuais. O histórico deste painel não recupera dados anteriores à primeira medição salva.</p>
-    </div>
-  </section>
-  <section id="conteudos" class="hidden">
-    <div class="panel">
-      <div class="section-head"><h2>Biblioteca de conteúdos</h2><button onclick="showTab('criar')">＋ Novo</button></div>
-      <div class="filters">
-        <select id="filterStatus" onchange="render()">
-          <option value="">Todos os status</option>
-          <option>Ideia</option><option>Rascunho</option><option>Aguardando aprovação</option><option>Aprovado</option><option>Publicado</option>
-        </select>
-        <select id="filterType" onchange="render()">
-          <option value="">Todos os formatos</option>
-          <option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option>
-        </select>
-      </div>
-    </div>
-    <div id="allitems" class="items"></div>
-  </section>
-  
-  <section id="criar" class="hidden">
-    <div class="panel">
-      <h2 id="formtitle">Cadastrar conteúdo</h2>
-      <form id="contentForm">
-        <input type="hidden" id="editId">
-        <div class="formgrid">
-          <div class="full">
-            <label for="title">Título ou ideia *</label>
-            <input id="title" required placeholder="Ex.: Acertei o alvo a mais de 660 metros!">
-          </div>
-          <div>
-            <label for="type">Formato</label>
-            <select id="type">
-              <option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option>
-            </select>
-          </div>
-          <div>
-            <label for="status">Status</label>
-            <select id="status">
-              <option>Ideia</option><option>Rascunho</option><option>Aguardando aprovação</option><option>Aprovado</option><option>Publicado</option>
-            </select>
-          </div>
-          <div class="full">
-            <label for="planned">Data e hora planejadas</label>
-            <input id="planned" type="datetime-local">
-          </div>
-          <div class="full">
-            <label for="description">Descrição / chamada para ação</label>
-            <textarea id="description"></textarea>
-          </div>
-          <div class="full">
-            <label for="hashtags">Hashtags</label>
-            <input id="hashtags" placeholder="#GhostReconWildlands #Shorts #Games">
-          </div>
-          <div class="full">
-            <label for="url">Link do YouTube</label>
-            <input id="url" type="url" placeholder="https://youtube.com/...">
-          </div>
-          <div class="full">
-            <label for="notes">Gancho inicial / ideia de thumbnail</label>
-            <textarea id="notes"></textarea>
-          </div>
-          <div class="full row">
-            <button type="submit">Salvar conteúdo</button>
-            <button type="button" class="secondary" onclick="resetForm()">Limpar</button>
-          </div>
-        </div>
-      </form>
-    </div>
+<main>
+<nav id="nav">
+<button class="active" data-tab="painel">Painel</button>
+<button data-tab="desempenho">Desempenho</button>
+<button data-tab="conteudos">Conteúdos</button>
+<button data-tab="criar">Criar conteúdo</button>
+<button data-tab="calendario">Calendário</button>
+<button data-tab="estrategia">Estratégia</button>
+<button data-tab="backup">Backup</button>
+</nav>
 
-    <div class="panel">
-      <h2>Gerador de conteúdo para Ghost Recon Wildlands</h2>
-      <p>Gera sugestões locais para você revisar. Não depende de uma IA externa.</p>
-      <label for="genTopic">Tema ou momento da gameplay</label>
-      <input id="genTopic" placeholder="Ex.: infiltração na base de San Mateo">
-      <label for="genType">Formato desejado</label>
-      <select id="genType">
-        <option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option>
-      </select>
-      <div class="actions">
-        <button type="button" onclick="generateText()">Gerar conteúdo</button>
-        <button type="button" class="secondary" onclick="copyGenerated()">Copiar</button>
-        <button type="button" class="green" onclick="saveGenerated()">Salvar como ideia</button>
-      </div>
-      <label for="generated">Título, descrição e gancho</label>
-      <textarea id="generated" style="min-height:220px" placeholder="As sugestões aparecerão aqui..."></textarea>
-      <div id="ideaBank" class="items"></div>
-    </div>
-  </section>
+<div id="notice" class="notice"></div>
 
-  <section id="calendario" class="hidden">
-    <div class="panel">
-      <h2>Calendário de publicações</h2>
-      <p>Escolha uma data para ver os conteúdos programados. Os horários são planejados por você; nada é publicado automaticamente.</p>
-      <label for="calendarDate">Dia</label>
-      <input id="calendarDate" type="date">
-      <div class="actions">
-        <button onclick="showTab('criar')">＋ Planejar publicação</button>
-        <button class="secondary" onclick="showAllCalendar()">Ver todas as datas</button>
-      </div>
-      <div id="calendarSummary" class="grid"></div>
-      <div id="calendarItems" class="items"></div>
-    </div>
-  </section>
+<section id="painel" class="panel active">
+<div class="card">
+<h2>📊 Visão geral</h2>
+<p>Organize a produção do seu canal e acompanhe os resultados informados ou importados.</p>
+<div class="grid">
+<div class="stat">Inscritos<strong id="statSubs">—</strong><span class="small">Último registro</span></div>
+<div class="stat">Visualizações<strong id="statViews">—</strong><span class="small">Último registro</span></div>
+<div class="stat">Vídeos planejados<strong id="statPlans">0</strong><span class="small">Biblioteca</span></div>
+<div class="stat">Ideias salvas<strong id="statIdeas">0</strong><span class="small">Status ideia</span></div>
+</div>
+</div>
+<div class="card">
+<h2>🎯 Próximas ações</h2>
+<ul>
+<li>Publique Shorts com um momento marcante nos primeiros 3 segundos.</li>
+<li>Use títulos específicos sobre a missão, o risco ou o resultado.</li>
+<li>Compare visualizações após 24 e 48 horas.</li>
+<li>Reaproveite as melhores cenas em vídeos verticais.</li>
+</ul>
+</div>
+<div class="card">
+<h2>🔗 Conexão do canal</h2>
+<p>Se você já tem um backend conectado, informe o endereço dele abaixo. A conexão depende dos endpoints disponíveis no servidor.</p>
+<label for="apiBase">Endereço do backend</label>
+<input id="apiBase" placeholder="https://seu-backend.onrender.com">
+<div class="actions"><button onclick="connectChannel()">Consultar canal</button><button class="secondary" onclick="saveApi()">Salvar endereço</button></div>
+<div id="channelResult" class="item">Canal ainda não consultado.</div>
+<p class="small">A conexão de estatísticas não publica vídeos automaticamente. A publicação exige integração própria e autorização adequada.</p>
+</div>
+</section>
 
-  <section id="estrategia" class="hidden">
-    <div class="panel">
-      <h2>Estratégia de conteúdo</h2>
-      <div class="items">
-        <div class="item">
-          <h3>Shorts: chamar atenção</h3>
-          <p>Comece pelo tiro, erro, explosão ou descoberta. Teste vídeos curtos e compare os resultados reais.</p>
-        </div>
-        <div class="item">
-          <h3>Vídeos: contar uma história</h3>
-          <p>Mostre o objetivo logo no início e corte deslocamentos sem ação.</p>
-        </div>
-        <div class="item">
-          <h3>Lives: criar um motivo para voltar</h3>
-          <p>Defina uma missão e um objetivo claros no título.</p>
-        </div>
-        <div class="item">
-          <h3>Revisão semanal</h3>
-          <p>Compare visualizações, inscritos e, quando disponíveis, impressões e retenção no YouTube Studio.</p>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>Checklist antes de publicar</h2>
-      <label><input type="checkbox"> O começo entrega o momento prometido?</label>
-      <label><input type="checkbox"> O título corresponde ao que acontece?</label>
-      <label><input type="checkbox"> A thumbnail é legível em tela pequena?</label>
-      <label><input type="checkbox"> A descrição tem uma chamada clara?</label>
-      <label><input type="checkbox"> Revisei áudio, cortes e direitos de uso?</label>
-    </div>
-  </section>
+<section id="desempenho" class="panel">
+<div class="card">
+<h2>📈 Registrar desempenho</h2>
+<p>Adicione os dados do canal para acompanhar sua evolução. Preencha os valores exibidos no YouTube Studio.</p>
+<div class="grid">
+<div><label for="metricDate">Data</label><input id="metricDate" type="date"></div>
+<div><label for="metricSubs">Inscritos</label><input id="metricSubs" type="number" min="0" placeholder="25"></div>
+<div><label for="metricViews">Visualizações</label><input id="metricViews" type="number" min="0" placeholder="5167"></div>
+<div><label for="metricVideos">Vídeos publicados</label><input id="metricVideos" type="number" min="0" placeholder="93"></div>
+</div>
+<div class="actions"><button onclick="addMetric()">Salvar registro</button></div>
+</div>
+<div class="card"><h2>Histórico</h2><div id="historyList"></div></div>
+</section>
 
-  <section id="backup" class="hidden">
-    <div class="panel">
-      <h2>Backup e segurança dos dados</h2>
-      <p>Os conteúdos e o histórico desta versão ficam neste navegador. Exporte backups para não perder seus registros.</p>
-      <div class="actions">
-        <button onclick="exportData()">Exportar backup JSON</button>
-        <button class="secondary" onclick="document.getElementById('importFile').click()">Importar backup</button>
-        <button class="secondary" onclick="exportCSV()">Exportar CSV</button>
-        <input class="hidden" type="file" id="importFile" accept=".json,application/json" onchange="importData(event)">
-      </div>
-      <div class="actions">
-        <button class="secondary" onclick="exportHistory()">Exportar histórico do canal</button>
-      </div>
-      <p class="small">A conexão atual com o YouTube é somente para leitura. Publicação direta ainda não está habilitada.</p>
-    </div>
-  </section>
+<section id="conteudos" class="panel">
+<div class="card">
+<h2>🎬 Biblioteca de conteúdos</h2>
+<p>Guarde ideias, títulos, descrições e o estado de cada publicação.</p>
+<label for="filterStatus">Filtrar por status</label>
+<select id="filterStatus" onchange="renderContents()">
+<option value="">Todos</option><option>Ideia</option><option>Planejado</option><option>Publicado</option>
+</select>
+<div id="contentList"></div>
+</div>
+</section>
+
+<section id="criar" class="panel">
+<div class="card">
+<h2>✨ Gerador de conteúdo</h2>
+<p>Gere sugestões diferentes para suas gameplays. Para seu canal, o foco inicial é Ghost Recon Wildlands.</p>
+<label for="genTopic">Tema ou momento da gameplay</label>
+<input id="genTopic" placeholder="Ex.: infiltração na base de San Mateo">
+<label for="genType">Formato desejado</label>
+<select id="genType"><option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option></select>
+<div class="actions">
+<button onclick="generateText()">Gerar conteúdo</button>
+<button class="secondary" onclick="copyGenerated()">Copiar</button>
+<button class="green" onclick="saveGenerated()">Salvar como ideia</button>
+</div>
+<label for="generated">Título, descrição, gancho e thumbnail</label>
+<textarea id="generated" style="min-height:290px" placeholder="As sugestões aparecerão aqui..."></textarea>
+</div>
+<div class="card"><h2>🗂️ Histórico de sugestões</h2><div id="ideaBank"></div></div>
+</section>
+
+<section id="calendario" class="panel">
+<div class="card">
+<h2>🗓️ Calendário editorial</h2>
+<label for="calendarDate">Data planejada</label><input id="calendarDate" type="date">
+<label for="calendarTitle">Título ou ideia</label><input id="calendarTitle" placeholder="Ex.: Errei um tiro e tudo deu errado">
+<label for="calendarType">Formato</label><select id="calendarType"><option>Short</option><option>Vídeo</option><option>Live</option><option>Post de divulgação</option></select>
+<div class="actions"><button onclick="addCalendar()">Adicionar ao calendário</button></div>
+<div id="calendarList"></div>
+</div>
+</section>
+
+<section id="estrategia" class="panel">
+<div class="card">
+<h2>🧠 Estratégia para crescer</h2>
+<h3>1. Gancho imediato</h3><p>Comece com a ação, o perigo ou o resultado. Evite introduções longas antes do momento principal.</p>
+<h3>2. Um objetivo por Short</h3><p>Mostre uma cena: tiro de sniper, infiltração, perseguição, erro inesperado ou combate intenso.</p>
+<h3>3. Título específico</h3><p>Prefira “Acertei um alvo a mais de 660 metros no Wildlands” a títulos vagos como “Gameplay nova”.</p>
+<h3>4. Retenção</h3><p>Remova pausas, carregamentos e trechos sem ação. Mostre o resultado prometido pelo título.</p>
+<h3>5. Teste e compare</h3><p>Registre visualizações, comentários e inscritos ganhos. Compare formatos semelhantes em períodos parecidos.</p>
+<h3>6. Frequência sustentável</h3><p>Comece com um Short bem editado por dia, se conseguir manter qualidade, e avalie os resultados após duas semanas.</p>
+</div>
+</section>
+
+<section id="backup" class="panel">
+<div class="card">
+<h2>💾 Backup e restauração</h2>
+<p>Exporte seus conteúdos, histórico e calendário para guardar uma cópia. O backup não inclui senhas ou tokens de acesso.</p>
+<div class="actions"><button onclick="exportBackup()">Exportar backup JSON</button></div>
+<label for="backupFile">Restaurar backup</label><input id="backupFile" type="file" accept=".json,application/json">
+<div class="actions"><button class="secondary" onclick="importBackup()">Restaurar arquivo selecionado</button></div>
+</div>
+</section>
 </main>
+<footer>YouTube Booster AI · Ferramenta de planejamento de conteúdo</footer>
 
 <script>
-const KEY = "youtube_booster_ai_v1";
-const HISTORY_KEY = "youtube_booster_history_v1";
-const API = "https://youtube-booster-ai.onrender.com";
-let contents = [];
-let history = [];
-let lastStats = null;
+const KEY="youtube_booster_ai_v1";
+const HISTORY_KEY="youtube_booster_history_v1";
+const CAL_KEY="youtube_booster_calendar_v1";
+const GEN_KEY="youtube_booster_gerados_v3";
+const $=id=>document.getElementById(id);
+let contents=[],metrics=[],calendar=[],generatedHistory=[];
 
-function load() {
-  try {
-    contents = JSON.parse(localStorage.getItem(KEY) || "[]");
-    if (!Array.isArray(contents)) contents = [];
-  } catch (e) { contents = []; }
-
-  try {
-    history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-    if (!Array.isArray(history)) history = [];
-  } catch (e) { history = []; }
-
-  if (!contents.length) {
-    contents = [{
-      id: Date.now(),
-      title: "Acertei o alvo a mais de 660 metros!",
-      type: "Short", status: "Ideia", planned: "",
-      description: "Um tiro de sniper impressionante em Ghost Recon Wildlands.",
-      hashtags: "#GhostReconWildlands #Shorts #Games",
-      url: "", notes: "Começar com o momento do disparo.",
-      views: 0, subs: 0, created: new Date().toISOString()
-    }];
-    save();
-  }
+function read(key,fallback=[]){
+ try{const v=JSON.parse(localStorage.getItem(key));return Array.isArray(fallback)?(Array.isArray(v)?v:fallback):(v??fallback)}catch{return fallback}
 }
-
-function save() {
-  localStorage.setItem(KEY, JSON.stringify(contents));
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(contents));
+ localStorage.setItem(HISTORY_KEY,JSON.stringify(metrics));
+ localStorage.setItem(CAL_KEY,JSON.stringify(calendar));
+ localStorage.setItem(GEN_KEY,JSON.stringify(generatedHistory));
+ updateDashboard();
 }
-
-function saveHistory() {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+function showNotice(message){
+ $("notice").textContent=message;$("notice").style.display="block";
+ clearTimeout(window.noticeTimer);
+ window.noticeTimer=setTimeout(()=>$("notice").style.display="none",3500);
 }
-
-function esc(s = "") {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
-  }[c]));
+function init(){
+ contents=read(KEY,[]);
+ metrics=read(HISTORY_KEY,[]);
+ calendar=read(CAL_KEY,[]);
+ generatedHistory=read(GEN_KEY,[]);
+ if(!$("metricDate").value)$("metricDate").value=new Date().toISOString().slice(0,10);
+ if(!$("calendarDate").value)$("calendarDate").value=new Date().toISOString().slice(0,10);
+ $("apiBase").value=localStorage.getItem("youtube_booster_api")||"";
+ document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x===b));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));
+ }));
+ render();
 }
-
-function showNotice(s) {
-  const n = document.getElementById("notice");
-  n.textContent = s;
-  n.classList.remove("hidden");
+function updateDashboard(){
+ const last=metrics[metrics.length-1];
+ $("statSubs").textContent=last?Number(last.subs).toLocaleString("pt-BR"):"—";
+ $("statViews").textContent=last?Number(last.views).toLocaleString("pt-BR"):"—";
+ $("statPlans").textContent=contents.length;
+ $("statIdeas").textContent=contents.filter(c=>c.status==="Ideia").length;
 }
-
-function showTab(id) {
-  document.querySelectorAll("main>section").forEach(s =>
-    s.classList.toggle("hidden", s.id !== id)
-  );
-  document.querySelectorAll(".tab").forEach(b =>
-    b.classList.toggle("active", b.dataset.tab === id)
-  );
-  render();
-  if (id === "desempenho") renderHistory();
-  if (id === "calendario") renderCalendar();
-  if (id === "criar") renderIdeaBank();
+function render(){renderContents();renderHistory();renderCalendar();renderIdeaBank();updateDashboard()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderContents(){
+ const filter=$("filterStatus").value;
+ const arr=contents.filter(c=>!filter||c.status===filter);
+ $("contentList").innerHTML=arr.length?arr.map(c=>`<div class="item"><h3>${esc(c.title)}</h3><div class="small">${esc(c.type||"Conteúdo")} · ${esc(c.status||"Ideia")} ${c.planned?"· "+esc(c.planned):""}</div><p>${esc(c.description||c.notes||"Sem descrição.")}</p><div class="actions"><button class="secondary" onclick="changeStatus(${Number(c.id)})">Alterar status</button><button class="red" onclick="deleteContent(${Number(c.id)})">Excluir</button></div></div>`).join(""):"<p>Nenhum conteúdo encontrado. Gere uma sugestão e salve como ideia.</p>";
 }
-
-document.querySelectorAll(".tab").forEach(b =>
-  b.addEventListener("click", () => showTab(b.dataset.tab))
-);
-
-function card(c) {
-  return `<article class="item">
-    <div class="itemtop">
-      <h3>${esc(c.title)}</h3><span class="pill">${esc(c.status)}</span>
-    </div>
-    <p class="small">${esc(c.type)}${c.planned ? " · " + esc(c.planned.replace("T"," ")) : ""}</p>
-    ${c.description ? `<p>${esc(c.description)}</p>` : ""}
-    ${c.hashtags ? `<p class="small">${esc(c.hashtags)}</p>` : ""}
-    ${c.url ? `<p><a href="${esc(c.url)}" target="_blank" rel="noopener">Abrir vídeo</a></p>` : ""}
-    ${c.notes ? `<p class="small">Notas: ${esc(c.notes)}</p>` : ""}
-    <p class="small">Visualizações manuais: ${Number(c.views)||0} · Inscritos atribuídos: ${Number(c.subs)||0}</p>
-    <div class="actions">
-      <button class="gold" onclick="editItem(${Number(c.id)})">Editar</button>
-      <button class="secondary" onclick="setStatus(${Number(c.id)},'Aguardando aprovação')">Enviar para aprovação</button>
-      <button class="green" onclick="setStatus(${Number(c.id)},'Aprovado')">Aprovar</button>
-      <button class="secondary" onclick="setStatus(${Number(c.id)},'Publicado')">Marcar publicado</button>
-      <button class="danger" onclick="deleteItem(${Number(c.id)})">Excluir</button>
-    </div>
-    <div class="formgrid">
-      <div><label>Status</label>
-        <select onchange="setStatus(${Number(c.id)},this.value)">
-          ${["Ideia","Rascunho","Aguardando aprovação","Aprovado","Publicado"].map(s =>
-            `<option ${c.status===s?"selected":""}>${s}</option>`).join("")}
-        </select>
-      </div>
-      <div><label>Visualizações manuais</label>
-        <input type="number" min="0" value="${Number(c.views)||0}" onchange="metric(${Number(c.id)},'views',this.value)">
-      </div>
-      <div><label>Inscritos atribuídos</label>
-        <input type="number" min="0" value="${Number(c.subs)||0}" onchange="metric(${Number(c.id)},'subs',this.value)">
-      </div>
-    </div>
-  </article>`;
+function renderHistory(){
+ $("historyList").innerHTML=metrics.length?[...metrics].reverse().map(m=>`<div class="item"><b>${esc(m.date)}</b><p>Inscritos: ${Number(m.subs).toLocaleString("pt-BR")} · Visualizações: ${Number(m.views).toLocaleString("pt-BR")} · Vídeos: ${Number(m.videos).toLocaleString("pt-BR")}</p></div>`).join(""):"<p>Nenhum registro ainda.</p>";
 }
-
-function render() {
-  document.getElementById("total").textContent = contents.length;
-  document.getElementById("pending").textContent =
-    contents.filter(c => c.status === "Aguardando aprovação").length;
-  document.getElementById("views").textContent =
-    contents.reduce((a,c) => a + (Number(c.views)||0),0).toLocaleString("pt-BR");
-  document.getElementById("subs").textContent =
-    contents.reduce((a,c) => a + (Number(c.subs)||0),0).toLocaleString("pt-BR");
-
-  const sorted = [...contents].sort((a,b) =>
-    (a.planned||"9999").localeCompare(b.planned||"9999")
-  );
-  document.getElementById("nextitems").innerHTML =
-    sorted.slice(0,4).map(card).join("") ||
-    '<div class="empty">Nenhum conteúdo cadastrado.</div>';
-
-  const st = document.getElementById("filterStatus")?.value || "";
-  const ty = document.getElementById("filterType")?.value || "";
-  const filtered = sorted.filter(c =>
-    (!st || c.status === st) && (!ty || c.type === ty)
-  );
-  document.getElementById("allitems").innerHTML =
-    filtered.map(card).join("") ||
-    '<div class="panel empty">Nenhum conteúdo corresponde ao filtro.</div>';
+function renderCalendar(){
+ $("calendarList").innerHTML=calendar.length?[...calendar].sort((a,b)=>a.date.localeCompare(b.date)).map(c=>`<div class="item"><b>${esc(c.date)} · ${esc(c.type)}</b><p>${esc(c.title)}</p><button class="red" onclick="deleteCalendar(${Number(c.id)})">Excluir</button></div>`).join(""):"<p>Seu calendário está vazio.</p>";
 }
-
-function resetForm() {
-  document.getElementById("contentForm").reset();
-  document.getElementById("editId").value = "";
-  document.getElementById("formtitle").textContent = "Cadastrar conteúdo";
+function renderIdeaBank(){
+ $("ideaBank").innerHTML=generatedHistory.length?[...generatedHistory].slice(-8).reverse().map(g=>`<div class="item"><b>${esc(g.title)}</b><p class="small">${esc(g.format)} · ${esc(g.date)}</p></div>`).join(""):"<p>As sugestões geradas aparecerão aqui.</p>";
 }
-
-document.getElementById("contentForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const id = document.getElementById("editId").value;
-  const old = contents.find(c => String(c.id) === String(id));
-  const c = {
-    id: id ? Number(id) : Date.now(),
-    title: document.getElementById("title").value.trim(),
-    type: document.getElementById("type").value,
-    status: document.getElementById("status").value,
-    planned: document.getElementById("planned").value,
-    description: document.getElementById("description").value.trim(),
-    hashtags: document.getElementById("hashtags").value.trim(),
-    url: document.getElementById("url").value.trim(),
-    notes: document.getElementById("notes").value.trim(),
-    views: old?.views || 0, subs: old?.subs || 0,
-    created: old?.created || new Date().toISOString()
-  };
-  if (id) contents = contents.map(x => x.id === Number(id) ? c : x);
-  else contents.unshift(c);
-  save(); resetForm(); render(); renderCalendar();
-  showNotice("Conteúdo salvo neste aparelho.");
-  showTab("conteudos");
-});
-
-function editItem(id) {
-  const c = contents.find(x => x.id === id);
-  if (!c) return;
-  showTab("criar");
-  document.getElementById("editId").value = c.id;
-  ["title","type","status","planned","description","hashtags","url","notes"].forEach(k =>
-    document.getElementById(k).value = c[k] || ""
-  );
-  document.getElementById("formtitle").textContent = "Editar conteúdo";
+function addMetric(){
+ const m={id:Date.now(),date:$("metricDate").value||new Date().toISOString().slice(0,10),subs:Number($("metricSubs").value),views:Number($("metricViews").value),videos:Number($("metricVideos").value)};
+ if(![$("metricSubs").value,$("metricViews").value,$("metricVideos").value].some(v=>v!==""))return showNotice("Preencha pelo menos um número.");
+ const i=metrics.findIndex(x=>x.date===m.date);if(i>=0)metrics[i]=m;else metrics.push(m);
+ metrics.sort((a,b)=>a.date.localeCompare(b.date));save();render();showNotice("Registro de desempenho salvo.");
 }
-
-function setStatus(id,s) {
-  const c = contents.find(x => x.id === id);
-  if (c) { c.status = s; save(); render(); renderCalendar(); showNotice("Status atualizado: " + s); }
+function changeStatus(id){
+ const c=contents.find(x=>x.id===id);if(!c)return;
+ const statuses=["Ideia","Planejado","Publicado"];
+ c.status=statuses[(statuses.indexOf(c.status)+1)%statuses.length];
+ save();render();showNotice("Status atualizado: "+c.status);
 }
-
-function metric(id,k,v) {
-  const c = contents.find(x => x.id === id);
-  if (c) { c[k] = Math.max(0,parseInt(v||"0",10)||0); save(); render(); }
+function deleteContent(id){
+ if(!confirm("Excluir este conteúdo da biblioteca?"))return;
+ contents=contents.filter(c=>c.id!==id);save();render();showNotice("Conteúdo excluído.");
 }
-
-function deleteItem(id) {
-  if (confirm("Excluir este conteúdo?")) {
-    contents = contents.filter(c => c.id !== id);
-    save(); render(); renderCalendar(); showNotice("Conteúdo excluído.");
-  }
+function addCalendar(){
+ const title=$("calendarTitle").value.trim(),date=$("calendarDate").value;
+ if(!title||!date)return showNotice("Preencha a data e o título.");
+ calendar.push({id:Date.now(),title,date,type:$("calendarType").value});save();renderCalendar();$("calendarTitle").value="";showNotice("Item adicionado ao calendário.");
 }
-
-
-function generateText() {
-  const chaveHistorico = "youtube_booster_gerados_v2";
-
-  const titulos = [
-    "🔥 VOCÊ NÃO VAI ACREDITAR NO QUE ACONTECEU!",
-    "🎯 O TIRO MAIS INSANO DE GHOST RECON WILDLANDS!",
-    "🚨 ESSA MISSÃO SAIU DO CONTROLE!",
-    "😱 EU NÃO ESPERAVA POR ESSE RESULTADO!",
-    "💥 A OPERAÇÃO MAIS PERIGOSA DA BOLÍVIA!",
-    "🎯 SERÁ QUE EU CONSIGO ACERTAR ESSE ALVO?",
-    "🔥 UM ERRO E TUDO VIROU UM CAOS!",
-    "⚠️ ENTREI NA BASE E ME ARREPENDI!",
-    "🎮 VOCÊ TERIA CORAGEM DE FAZER ISSO?",
-    "💀 A MISSÃO MAIS TENS A ATÉ AGORA!",
-    "🪖 INFILTRAÇÃO SILENCIOSA... SERÁ QUE VAI DAR CERTO?",
-    "🔭 UM ALVO, UM TIRO E NENHUMA SEGUNDA CHANCE!",
-    "🚁 O HELICÓPTERO MUDOU TODA A MISSÃO!",
-    "👀 OLHA O QUE DESCOBRI NESSA BASE!",
-    "💣 QUASE COLOQUEI TUDO A PERDER!"
-  ];
-
-  const ganchos = [
-    "Pera aí... você viu isso?",
-    "Essa missão pode dar muito errado!",
-    "Olha onde esse tiro vai parar!",
-    "Eu não esperava que isso acontecesse!",
-    "Será que vou conseguir sair dessa?",
-    "Presta atenção nesse momento!",
-    "Um pequeno erro mudou tudo!",
-    "Você teria coragem de tentar?",
-    "Olha o que aconteceu nessa missão!",
-    "Fica até o final para ver o resultado!",
-    "Será que alguém vai perceber minha presença?",
-    "A próxima decisão pode acabar com tudo!",
-    "Eu tinha apenas uma chance!",
-    "Olha o tamanho do problema que apareceu!",
-    "Você faria diferente nessa situação?"
-  ];
-
-  const descricoes = [
-    "Uma missão intensa em Ghost Recon Wildlands! Assista até o final e conte nos comentários o que você faria nessa situação.",
-    "Mais um desafio em Ghost Recon Wildlands! Será que essa operação vai terminar como planejado? Comente sua estratégia!",
-    "Confira esse momento da gameplay de Ghost Recon Wildlands. Você teria feito algo diferente? Quero saber sua opinião!",
-    "A Bolívia está cheia de desafios em Ghost Recon Wildlands! Acompanhe a missão e diga nos comentários seu próximo movimento.",
-    "Gameplay de Ghost Recon Wildlands com ação, estratégia e muita tensão. Assista e compartilhe sua opinião!",
-    "Cada decisão importa nesta missão de Ghost Recon Wildlands. Comente como você enfrentaria esse desafio!",
-    "Mais um trecho da nossa jornada em Ghost Recon Wildlands. Qual seria sua estratégia nesta situação?",
-    "A missão continua na Bolívia! Veja este momento de Ghost Recon Wildlands e participe nos comentários."
-  ];
-
-  const thumbnails = [
-    "Personagem à esquerda, inimigos ao fundo e texto grande em branco e amarelo.",
-    "Sniper em destaque, alvo ao longe e cenário de ação.",
-    "Personagem em primeiro plano, base inimiga ao fundo e seta vermelha.",
-    "Cena de combate, personagem destacado e texto curto com contorno branco.",
-    "Helicóptero ao fundo, personagem à esquerda e destaque na ação principal.",
-    "Base inimiga ao fundo, personagem mirando e texto amarelo de alto contraste.",
-    "Close do personagem, perigo ao fundo e poucas palavras em letras grandes.",
-    "Paisagem da Bolívia, inimigo destacado e contorno branco nos elementos principais."
-  ];
-
-  function embaralhar(lista) {
-    const copia = [...lista];
-    for (let i = copia.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copia[i], copia[j]] = [copia[j], copia[i]];
-    }
-    return copia;
-  }
-
-  let historico = [];
-
-  try {
-    const salvo = localStorage.getItem(chaveHistorico);
-    historico = salvo ? JSON.parse(salvo) : [];
-    if (!Array.isArray(historico)) historico = [];
-  } catch (erro) {
-    alert("Não consegui ler o histórico salvo. Verifique o armazenamento do navegador.");
-    return;
-  }
-
-  const usados = new Set(
-    historico.map(item => item.chave).filter(Boolean)
-  );
-
-  // Gera combinações de título, gancho, descrição e thumbnail.
-  // A ordem é embaralhada para não começar sempre pela mesma opção.
-  const opcoesTitulo = embaralhar(titulos);
-  const opcoesGancho = embaralhar(ganchos);
-  const opcoesDescricao = embaralhar(descricoes);
-  const opcoesThumbnail = embaralhar(thumbnails);
-
-  let escolhida = null;
-
-  busca:
-  for (const titulo of opcoesTitulo) {
-    for (const gancho of opcoesGancho) {
-      for (const descricao of opcoesDescricao) {
-        for (const thumbnail of opcoesThumbnail) {
-          const chave = [titulo, gancho, descricao, thumbnail].join("|||");
-
-          if (!usados.has(chave)) {
-            escolhida = {
-              titulo,
-              gancho,
-              descricao,
-              thumbnail,
-              chave
-            };
-            break busca;
-          }
-        }
-      }
-    }
-  }
-
-  if (!escolhida) {
-    alert(
-      "As combinações disponíveis deste gerador já foram usadas. " +
-      "Precisamos adicionar novas opções para continuar criando combinações inéditas."
-    );
-    return;
-  }
-
-  const tituloEl = document.getElementById("genTitle");
-  const descricaoEl = document.getElementById("genDesc");
-  const ganchoEl = document.getElementById("genHook");
-  const thumbnailEl = document.getElementById("genThumb");
-
-  if (!tituloEl || !descricaoEl || !ganchoEl || !thumbnailEl) {
-    alert(
-      "Não encontrei todos os campos do gerador. " +
-      "Precisamos conferir os IDs no HTML antes de continuar."
-    );
-    return;
-  }
-
-  tituloEl.value = escolhida.titulo;
-  descricaoEl.value =
-    escolhida.descricao +
-    "\n\n#GhostReconWildlands #Shorts #Gameplay";
-  ganchoEl.value = escolhida.gancho;
-  thumbnailEl.value = escolhida.thumbnail;
-
-  historico.push({
-    chave: escolhida.chave,
-    titulo: escolhida.titulo,
-    data: new Date().toISOString()
-  });
-
-  try {
-    localStorage.setItem(chaveHistorico, JSON.stringify(historico));
-  } catch (erro) {
-    alert(
-      "O conteúdo foi gerado, mas não consegui salvar o histórico. " +
-      "O navegador pode estar sem espaço disponível."
-    );
-  }
+function deleteCalendar(id){calendar=calendar.filter(c=>c.id!==id);save();renderCalendar();showNotice("Item removido do calendário.")}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function generateText(){
+ const tema=$("genTopic").value.trim()||"missão em Ghost Recon Wildlands";
+ const tipo=$("genType").value;
+ const titles=[
+ "A OPERAÇÃO MAIS PERIGOSA DA BOLÍVIA!","ERREI UM TIRO E TUDO DEU ERRADO!","O TIRO DE SNIPER MAIS INSANO!","NINGUÉM ESPERAVA ESSE ATAQUE!","ENTRAMOS NA BASE MAIS PERIGOSA!","ACERTEI UM ALVO A MAIS DE 660 METROS!","ESSA INFILTRAÇÃO QUASE DEU ERRADO!","O PLANO ERA PERFEITO… ATÉ ISSO ACONTECER!","FUI DESCOBERTO NO PIOR MOMENTO!","UM ÚNICO TIRO MUDOU A MISSÃO!","A BASE INTEIRA ENTROU EM ALERTA!","VOCÊ CONSEGUIRIA SOBREVIVER A ESSA MISSÃO?","O INIMIGO NÃO VIU DE ONDE VEIO O TIRO!","A MISSÃO MAIS TENSА DO WILDLANDS!","TENTEI ENTRAR SEM SER VISTO…","O COMBATE FICOU FORA DE CONTROLE!","A DISTÂNCIA DESSE TIRO É ABSURDA!","QUASE PERDEMOS A OPERAÇÃO!","O PLANO DE INFILTRAÇÃO DEU CERTO?","O MOMENTO MAIS TENSO DA GAMEPLAY!"
+ ];
+ const hooks=[
+ "Olha o que aconteceu quando entrei nessa base…","Eu tinha só uma chance para acertar.","Essa missão podia dar muito errado.","Repara no que acontece nos próximos segundos.","O plano era entrar sem levantar suspeitas.","Você faria esse disparo nessa distância?","Tudo estava tranquilo até esse momento.","Fica até o final para ver o resultado.","Eu não esperava encontrar tantos inimigos.","Um erro e a operação inteira estaria comprometida."
+ ];
+ const thumbs=[
+ "Personagem à esquerda, base ao fundo e texto grande branco e amarelo: OPERAÇÃO PERIGOSA!","Mira no alvo distante, contraste forte e texto: 660 METROS!","Explosão ou combate ao fundo, personagem destacado e texto: DEU TUDO ERRADO!","Base inimiga ao fundo, círculo vermelho no alvo e texto: INFILTRAÇÃO!","Rosto/personagem destacado, cenário de ação e texto: TIRO INSANO!","Helicóptero ou inimigos em ação e texto: OLHA ISSO!","Imagem limpa, alvo bem visível e texto curto: UM ÚNICO TIRO!","Personagem destacado com contorno branco e texto amarelo: FUI DESCOBERTO!"
+ ];
+ const descriptions=[
+ "A missão de hoje em Ghost Recon Wildlands ficou intensa. Confira a gameplay e conte nos comentários qual seria sua estratégia.\n\nInscreva-se no canal para acompanhar mais missões, infiltrações e combates.",
+ "Hoje é dia de operação na Bolívia! Assista ao momento, veja como a missão se desenrola e deixe sua opinião nos comentários.\n\nAcompanhe o canal para mais gameplays de Ghost Recon Wildlands.",
+ "Mais um momento de Ghost Recon Wildlands, com ação, estratégia e decisões em campo. Qual seria sua próxima jogada?\n\nDeixe seu comentário e acompanhe os próximos vídeos.",
+ "Será que a estratégia funcionou? Confira a cena completa e diga nos comentários o que você faria nessa situação.\n\nNovas gameplays e missões no canal."
+ ];
+ const title=shuffle(titles)[0]+" — "+tema;
+ const hook=shuffle(hooks)[0];
+ const desc=shuffle(descriptions)[0];
+ const thumb=shuffle(thumbs)[0];
+ const hashtags="#GhostReconWildlands #Gameplay #Shorts #Gaming";
+ let reminder=tipo==="Post de divulgação"?"Convide o público do TikTok para assistir à gameplay no YouTube; não diga que a live acontece no TikTok se ela for no YouTube.":tipo==="Live"?"Informe o horário real da transmissão e confira o áudio antes de começar.":"Mostre o momento principal logo no início e corte pausas desnecessárias.";
+ $("generated").value=`TÍTULO:\n${title}\n\nFORMATO:\n${tipo}\n\nTEMA:\n${tema}\n\nDESCRIÇÃO:\n${desc}\n\nGANCHO — PRIMEIROS 3 SEGUNDOS:\n${hook}\n\nIDEIA DE THUMBNAIL:\n${thumb}\n\nHASHTAGS:\n${hashtags}\n\nLEMBRETE:\n${reminder}`;
+ generatedHistory.push({id:Date.now(),title,format:tipo,date:new Date().toLocaleDateString("pt-BR"),topic:tema});
+ save();renderIdeaBank();showNotice("Nova sugestão gerada e registrada no histórico!");
 }
-
-
-async function copyGenerated() {
-  const v = document.getElementById("generated").value;
-  if (!v) return showNotice("Gere o conteúdo primeiro.");
-  try {
-    await navigator.clipboard.writeText(v);
-    showNotice("Texto copiado.");
-  } catch (e) {
-    document.getElementById("generated").select();
-    showNotice("Selecione o texto e copie manualmente.");
-  }
+async function copyGenerated(){
+ const text=$("generated").value;if(!text.trim())return showNotice("Gere uma sugestão primeiro.");
+ try{await navigator.clipboard.writeText(text);showNotice("Conteúdo copiado!")}catch{$("generated").focus();$("generated").select();showNotice("Texto selecionado. Escolha Copiar no menu do aparelho.")}
 }
-
-function saveGenerated() {
-  const text = document.getElementById("generated").value;
-  if (!text.trim()) return showNotice("Gere uma sugestão primeiro.");
-  const title = (text.match(/TÍTULO:\n([^\n]+)/) || [,"Nova ideia de conteúdo"])[1];
-  const description = (text.match(/DESCRIÇÃO:\n([\s\S]*?)\n\nGANCHO/) || [,""])[1];
-  const type = document.getElementById("genType").value;
-  contents.unshift({
-    id: Date.now(), title, type, status: "Ideia", planned: "",
-    description, hashtags: "#GhostReconWildlands #Gameplay",
-    url: "", notes: text, views: 0, subs: 0,
-    created: new Date().toISOString()
-  });
-  save();
-  render();
-  renderIdeaBank();
-  showNotice("Ideia salva na biblioteca.");
+function saveGenerated(){
+ const text=$("generated").value;if(!text.trim())return showNotice("Gere uma sugestão primeiro.");
+ const title=(text.match(/TÍTULO:\n([^\n]+)/)||[,"Nova ideia de conteúdo"])[1];
+ const description=(text.match(/DESCRIÇÃO:\n([\s\S]*?)\n\nGANCHO/)||[,""])[1];
+ const hashtags=(text.match(/HASHTAGS:\n([^\n]+)/)||[,"#GhostReconWildlands #Gameplay"])[1];
+ contents.unshift({id:Date.now(),title,type:$("genType").value,status:"Ideia",planned:"",description,hashtags,url:"",notes:text,views:0,subs:0,created:new Date().toISOString()});
+ save();render();showNotice("Ideia salva na biblioteca.");
 }
-
-function renderIdeaBank() {
-  const el = document.getElementById("ideaBank");
-  if (!el) return;
-  const ideas = contents.filter(c => c.status === "Ideia").slice(0, 6);
-  el.innerHTML = `<h3 class="full">Banco de ideias (${ideas.length})</h3>` +
-    (ideas.map(c => `<div class="idea"><strong>${esc(c.title)}</strong><p class="small">${esc(c.type)}</p></div>`).join("") ||
-    '<p class="empty">Nenhuma ideia cadastrada.</p>');
+function exportBackup(){
+ const data={version:1,exportedAt:new Date().toISOString(),contents,metrics,calendar,generatedHistory};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="youtube-booster-backup.json";a.click();URL.revokeObjectURL(url);
+ showNotice("Backup exportado.");
 }
-
-function recordSnapshot(stats, channel) {
-  const entry = {
-    date: new Date().toISOString(),
-    channel: channel || "YouTube",
-    subscribers: Number(stats.subscriberCount || 0),
-    views: Number(stats.viewCount || 0),
-    videos: Number(stats.videoCount || 0)
-  };
-  const last = history[history.length - 1];
-  if (last && last.date.slice(0, 10) === entry.date.slice(0, 10)) {
-    history[history.length - 1] = entry;
-  } else {
-    history.push(entry);
-  }
-  history = history.slice(-180);
-  saveHistory();
-  renderHistory();
+function importBackup(){
+ const file=$("backupFile").files[0];if(!file)return showNotice("Selecione um arquivo JSON.");
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const d=JSON.parse(reader.result);
+   if(!confirm("Restaurar o backup? Os dados atuais destas listas serão substituídos."))return;
+   contents=Array.isArray(d.contents)?d.contents:[];
+   metrics=Array.isArray(d.metrics)?d.metrics:[];
+   calendar=Array.isArray(d.calendar)?d.calendar:[];
+   generatedHistory=Array.isArray(d.generatedHistory)?d.generatedHistory:[];
+   save();render();showNotice("Backup restaurado.");
+  }catch{showNotice("Arquivo inválido. Selecione um backup JSON do YouTube Booster AI.")}
+ };
+ reader.readAsText(file);
 }
-
-function renderChart(chartId, labelsId, key) {
-  const chart = document.getElementById(chartId);
-  const labels = document.getElementById(labelsId);
-  const list = history.slice(-12);
-  if (!list.length) {
-    chart.innerHTML = '<p class="small">Ainda não há medições salvas.</p>';
-    labels.innerHTML = "";
-    return;
-  }
-  const max = Math.max(1, ...list.map(x => Number(x[key]) || 0));
-  chart.innerHTML = list.map(x => {
-    const value = Number(x[key]) || 0;
-    const height = Math.max(4, value / max * 100);
-    return `<div class="bar" style="height:${height}%"><span>${value.toLocaleString("pt-BR")}</span></div>`;
-  }).join("");
-  labels.innerHTML = list.map(x =>
-    `<span>${new Date(x.date).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span>`
-  ).join("");
+function saveApi(){
+ const url=$("apiBase").value.trim().replace(/\/+$/,"");
+ localStorage.setItem("youtube_booster_api",url);showNotice("Endereço do backend salvo.");
 }
-
-function renderHistory() {
-  document.getElementById("historyCount").textContent = history.length;
-  const first = history[0], last = history[history.length - 1];
-  function diff(key) {
-    if (!first || !last) return "—";
-    const d = Number(last[key]) - Number(first[key]);
-    return (d > 0 ? "+" : "") + d.toLocaleString("pt-BR");
-  }
-  document.getElementById("growthSubs").textContent = diff("subscribers");
-  document.getElementById("growthViews").textContent = diff("views");
-  document.getElementById("growthVideos").textContent = diff("videos");
-  renderChart("viewsChart", "viewsLabels", "views");
-  renderChart("subsChart", "subsLabels", "subscribers");
+async function connectChannel(){
+ saveApi();
+ const base=localStorage.getItem("youtube_booster_api");
+ if(!base)return showNotice("Informe o endereço do backend.");
+ $("channelResult").textContent="Consultando o backend…";
+ try{
+  const response=await fetch(base+"/api/canal");
+  if(!response.ok)throw new Error("O servidor respondeu com HTTP "+response.status);
+  const data=await response.json();
+  $("channelResult").textContent=JSON.stringify(data,null,2);
+  showNotice("Resposta recebida do backend.");
+ }catch(e){
+  $("channelResult").textContent="Não foi possível consultar /api/canal. Confira se o backend está ativo, se a rota existe e se o CORS permite esta página. Detalhe: "+e.message;
+  showNotice("Falha ao consultar o canal.");
+ }
 }
-
-function clearHistory() {
-  if (!confirm("Apagar todo o histórico salvo neste navegador?")) return;
-  history = [];
-  saveHistory();
-  renderHistory();
-  showNotice("Histórico apagado.");
-}
-
-function exportHistory() {
-  download("youtube-booster-historico.json", JSON.stringify(history, null, 2), "application/json");
-}
-
-function renderCalendar() {
-  const dateEl = document.getElementById("calendarDate");
-  if (!dateEl) return;
-  const chosen = dateEl.value || new Date().toISOString().slice(0, 10);
-  const scheduled = contents.filter(c => c.planned);
-  const todayItems = scheduled.filter(c => c.planned.slice(0, 10) === chosen)
-    .sort((a, b) => a.planned.localeCompare(b.planned));
-  const upcoming = scheduled.filter(c => c.planned.slice(0, 10) >= chosen)
-    .sort((a, b) => a.planned.localeCompare(b.planned));
-  document.getElementById("calendarSummary").innerHTML = `
-    <div class="stat"><strong>${todayItems.length}</strong><span>Publicações neste dia</span></div>
-    <div class="stat"><strong>${upcoming.length}</strong><span>Programadas a partir desta data</span></div>
-    <div class="stat"><strong>${scheduled.filter(c => c.status === "Publicado").length}</strong><span>Marcadas como publicadas</span></div>
-    <div class="stat"><strong>${scheduled.filter(c => c.status !== "Publicado").length}</strong><span>Ainda não publicadas</span></div>`;
-  document.getElementById("calendarItems").innerHTML = todayItems.map(card).join("") ||
-    '<div class="empty">Nenhuma publicação planejada para esta data.</div>';
-}
-
-function showAllCalendar() {
-  const scheduled = contents.filter(c => c.planned).sort((a,b) => a.planned.localeCompare(b.planned));
-  document.getElementById("calendarItems").innerHTML = scheduled.map(card).join("") ||
-    '<div class="empty">Nenhuma publicação com data definida.</div>';
-}
-
-document.getElementById("calendarDate").addEventListener("change", renderCalendar);
-
-function download(name, content, type) {
-  const blob = new Blob([content], {type});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
-function exportData() {
-  download("youtube-booster-backup.json", JSON.stringify({
-    contents, history
-  }, null, 2), "application/json");
-}
-
-function importData(ev) {
-  const file = ev.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (Array.isArray(data)) {
-        contents = data;
-      } else if (data && Array.isArray(data.contents)) {
-        contents = data.contents;
-        if (Array.isArray(data.history)) {
-          history = data.history;
-          saveHistory();
-        }
-      } else throw Error("Formato inválido");
-      save();
-      render();
-      renderHistory();
-      renderCalendar();
-      showNotice("Backup importado.");
-    } catch (e) {
-      showNotice("Backup inválido. Nenhum dado foi importado.");
-    }
-    ev.target.value = "";
-  };
-  reader.readAsText(file);
-}
-
-function exportCSV() {
-  const cols = ["title","type","status","planned","description","hashtags","url","views","subs","notes"];
-  const csv = [cols.join(";"), ...contents.map(c =>
-    cols.map(k => '"' + String(c[k] ?? "").replace(/"/g, '""') + '"').join(";")
-  )].join("\r\n");
-  download("youtube-booster-conteudos.csv", "\ufeff" + csv, "text/csv;charset=utf-8");
-}
-
-function conectarYouTube() {
-  window.location.href = API + "/login";
-}
-
-function abrirStatusAPI() {
-  window.open(API + "/", "_blank", "noopener");
-}
-
-async function carregarDadosYouTube() {
-  const status = document.getElementById("youtubeConnectionStatus");
-  status.className = "connection";
-  status.textContent = "Consultando canal do YouTube...";
-  try {
-    const response = await fetch(API + "/api/canal", {
-      method: "GET", credentials: "include", cache: "no-store"
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      status.classList.add("status-error");
-      status.textContent = data.erro || "Conexão indisponível. Clique em Conectar YouTube.";
-      return;
-    }
-    const stats = data.estatisticas || {};
-    document.getElementById("ytSubscribers").textContent =
-      Number(stats.subscriberCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytViews").textContent =
-      Number(stats.viewCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytVideos").textContent =
-      Number(stats.videoCount || 0).toLocaleString("pt-BR");
-    document.getElementById("ytChannel").textContent = data.canal || "Conectado";
-    status.classList.add("status-ok");
-    status.textContent = "Conectado ao canal: " + (data.canal || "YouTube");
-    recordSnapshot(stats, data.canal);
-  } catch (e) {
-    console.error(e);
-    status.classList.add("status-error");
-    status.textContent = "Falha na consulta. Verifique a conexão ou os cookies do navegador.";
-  }
-}
-
-load();
-render();
-renderHistory();
-renderCalendar();
-renderIdeaBank();
-carregarDadosYouTube();
+init();
 </script>
 </body>
 </html>
-
