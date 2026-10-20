@@ -738,7 +738,76 @@ async function carregarVideos() {
     status.textContent = "Não foi possível carregar os vídeos: " + erro.message;
   }
 }
-init();
+function analisarDesempenhoVideos() {
+  const lista = document.getElementById("listaVideos");
+  const status = document.getElementById("videosStatus");
+
+  if (!lista || !lista.children.length) {
+    if (status) {
+      status.textContent = "Primeiro clique em Atualizar vídeos para carregar os dados.";
+    }
+    return;
+  }
+
+  const cartoes = Array.from(lista.querySelectorAll(".item"));
+  const resultados = cartoes.map(function(cartao) {
+    const titulo = cartao.querySelector("h3")?.textContent || "Vídeo sem título";
+    const detalhes = cartao.querySelector("p")?.textContent || "";
+    const match = detalhes.match(/Visualizações:\s*([\d.]+)/);
+    const visualizacoes = match
+      ? Number(match[1].replace(/\./g, ""))
+      : 0;
+
+    return { titulo, visualizacoes };
+  });
+
+  resultados.sort(function(a, b) {
+    return b.visualizacoes - a.visualizacoes;
+  });
+
+  let painel = document.getElementById("analiseVideos");
+
+  if (!painel) {
+    painel = document.createElement("div");
+    painel.id = "analiseVideos";
+    painel.className = "card";
+    lista.parentNode.insertBefore(painel, lista);
+  }
+
+  painel.replaceChildren();
+
+  const tituloPainel = document.createElement("h2");
+  tituloPainel.textContent = "📊 Análise de desempenho";
+  painel.appendChild(tituloPainel);
+
+  const descricao = document.createElement("p");
+  descricao.textContent = "Vídeos ordenados pelo total de visualizações informado pelo YouTube.";
+  painel.appendChild(descricao);
+
+  const melhores = resultados.slice(0, 5);
+
+  melhores.forEach(function(video, indice) {
+    const item = document.createElement("div");
+    item.className = "item";
+
+    const nome = document.createElement("h3");
+    nome.textContent = (indice + 1) + "º — " + video.titulo;
+    item.appendChild(nome);
+
+    const views = document.createElement("p");
+    views.textContent = "👁️ " + video.visualizacoes.toLocaleString("pt-BR") + " visualizações";
+    item.appendChild(views);
+
+    painel.appendChild(item);
+  });
+
+  const sugestao = document.createElement("p");
+  sugestao.textContent =
+    "💡 Ideia: observe os temas e momentos dos vídeos com mais visualizações. " +
+    "Teste novos Shorts com ação logo nos primeiros 3 segundos e compare os resultados.";
+  painel.appendChild(sugestao);
+}
+  init();
 </script>
 </body>
 </html>
