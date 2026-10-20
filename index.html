@@ -281,21 +281,30 @@ function esc(s){
  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
-function renderContents(){
- const filter=$("filterStatus").value;
- const arr=contents.filter(c=>!filter||c.status===filter);
 
- $("contentList").innerHTML=arr.length?arr.map(c=>`
+function renderContents(){
+ const filter = $("filterStatus").value;
+ const arr = contents.filter(c => !filter || c.status === filter);
+
+ $("contentList").innerHTML = arr.length ? arr.map(c => `
  <div class="item">
  <h3>${esc(c.title)}</h3>
- <div class="small">${esc(c.type||"Conteúdo")} · ${esc(c.status||"Ideia")} ${c.planned?"· "+esc(c.planned):""}</div>
- <p>${esc(c.description||c.notes||"Sem descrição.")}</p>
+ <div class="small">${esc(c.type || "Conteúdo")} · ${esc(c.status || "Ideia")} ${c.planned ? "· " + esc(c.planned) : ""}</div>
+ <p>${esc(c.description || c.notes || "Sem descrição.")}</p>
  <div class="actions">
- <button class="secondary" onclick="changeStatus(${Number(c.id)})">Alterar status</button>
+ <label>
+   Alterar status:
+   <select onchange="changeStatusSelect(${Number(c.id)}, this.value)">
+     <option value="Ideia" ${c.status === "Ideia" ? "selected" : ""}>Ideia</option>
+     <option value="Planejado" ${c.status === "Planejado" ? "selected" : ""}>Planejado</option>
+     <option value="Publicado" ${c.status === "Publicado" ? "selected" : ""}>Publicado</option>
+   </select>
+ </label>
  <button class="red" onclick="deleteContent(${Number(c.id)})">Excluir</button>
  </div>
- </div>`).join(""):"<p>Nenhum conteúdo encontrado. Gere uma sugestão e salve como ideia.</p>";
+ </div>`).join("") : "<p>Nenhum conteúdo encontrado. Gere uma sugestão e salve como ideia.</p>";
 }
+
 
 function renderHistory(){
  $("historyList").innerHTML=metrics.length?[...metrics].reverse().map(m=>`
@@ -372,6 +381,19 @@ function changeStatus(id){
   save();
   render();
   showNotice("Status atualizado: " + c.status);
+}
+
+function changeStatusSelect(id, status){
+ const c = contents.find(x => x.id === id);
+ if (!c) return;
+
+ const statuses = ["Ideia", "Planejado", "Publicado"];
+ if (!statuses.includes(status)) return;
+
+ c.status = status;
+ save();
+ render();
+ showNotice("Status atualizado: " + c.status);
 }
 
 function deleteContent(id){
