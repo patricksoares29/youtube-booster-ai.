@@ -974,79 +974,126 @@ function analisarDesempenhoVideos() {
     painel.appendChild(item);
   });
 
-  // Identificação simples de temas recorrentes nos títulos
-  adicionarTitulo("💡 Ideias para novos Shorts");
+  // Sugestões inteligentes de Shorts baseadas nos vídeos do canal
+  adicionarTitulo("🚀 CENTRAL DE IDEIAS PARA NOVOS SHORTS");
 
   const temas = [
     {
       nome: "Sniper e tiros de longa distância",
-      palavras: ["sniper", "tiro", "alvo", "distância", "metros"]
+      palavras: ["sniper", "tiro", "alvo", "distância", "metros"],
+      titulo: "🎯 O TIRO DE SNIPER MAIS INSANO DO WILDLANDS!",
+      gancho: "Você acertaria esse alvo a essa distância?",
+      gravacao: "Mostre a mira, a distância do alvo e o disparo. Revele o resultado no final."
     },
     {
       nome: "Infiltração em bases inimigas",
-      palavras: ["base", "infiltração", "infiltrar", "missão"]
+      palavras: ["base", "infiltração", "infiltrar", "missão"],
+      titulo: "🔥 CONSEGUI ENTRAR NA BASE SEM SER DESCOBERTO?",
+      gancho: "Se um inimigo me vir, a missão acaba!",
+      gravacao: "Mostre a entrada na base, a movimentação silenciosa e o momento de maior tensão."
     },
     {
       nome: "Combates e situações inesperadas",
-      palavras: ["combate", "erro", "errado", "ataque", "explosão", "helicóptero"]
+      palavras: ["combate", "erro", "errado", "ataque", "explosão", "helicóptero"],
+      titulo: "💥 UM ERRO E TUDO VIROU UM CAOS!",
+      gancho: "Era para ser fácil... até isso acontecer!",
+      gravacao: "Comece segundos antes do erro e mostre como a situação virou um combate."
     },
     {
       nome: "Operações perigosas",
-      palavras: ["operação", "perigosa", "perigo", "bolívia"]
+      palavras: ["operação", "perigosa", "perigo", "bolívia"],
+      titulo: "⚠️ A MISSÃO MAIS PERIGOSA DA BOLÍVIA!",
+      gancho: "Entramos nessa operação sem saber o que nos esperava!",
+      gravacao: "Mostre a chegada à área, a ameaça principal e um momento decisivo da missão."
     }
   ];
 
-  const pontuacoes = temas.map(function(tema) {
+  const ideias = temas.map(function(tema) {
     const relacionados = resultados.filter(function(video) {
       const titulo = video.titulo.toLowerCase();
-      return tema.palavras.some(palavra => titulo.includes(palavra));
+      return tema.palavras.some(function(palavra) {
+        return titulo.includes(palavra);
+      });
     });
 
+    const visualizacoes = relacionados.reduce(function(soma, video) {
+      return soma + video.visualizacoes;
+    }, 0);
+
     return {
-      nome: tema.nome,
+      ...tema,
       quantidade: relacionados.length,
-      visualizacoes: relacionados.reduce(
-        (soma, video) => soma + video.visualizacoes, 0
-      )
+      visualizacoes: visualizacoes
     };
-  }).sort((a, b) => b.visualizacoes - a.visualizacoes);
+  }).sort(function(a, b) {
+    return b.visualizacoes - a.visualizacoes;
+  });
 
-  pontuacoes.forEach(function(tema) {
-    const item = document.createElement("div");
-    item.className = "item";
+  ideias.forEach(function(ideia, indice) {
+    const cartao = document.createElement("div");
+    cartao.style.cssText =
+      "background:linear-gradient(145deg,#151f33,#0c1322);" +
+      "border:1px solid #293b59;border-radius:14px;" +
+      "padding:16px;margin:12px 0;";
 
-    const nome = document.createElement("b");
-    nome.textContent = tema.nome;
-    item.appendChild(nome);
+    const titulo = document.createElement("h3");
+    titulo.textContent = (indice + 1) + ". " + ideia.titulo;
+    titulo.style.cssText =
+      "color:#54d6ff;font-size:16px;line-height:1.5;margin:0 0 12px;";
 
-    const detalhe = document.createElement("p");
-    detalhe.textContent = tema.quantidade
-      ? tema.quantidade + " vídeo(s) relacionado(s) · " +
-        tema.visualizacoes.toLocaleString("pt-BR") +
-        " visualizações somadas"
-      : "Ainda não há títulos relacionados entre os vídeos carregados.";
-    item.appendChild(detalhe);
+    const tema = document.createElement("p");
+    tema.textContent =
+      "📊 Tema: " + ideia.nome +
+      " · " + ideia.quantidade + " vídeo(s) relacionado(s) · " +
+      ideia.visualizacoes.toLocaleString("pt-BR") + " visualizações somadas";
+    tema.style.cssText = "color:#a9b9d2;font-size:12px;";
 
-    const sugestao = document.createElement("p");
-    sugestao.textContent = "Short sugerido: " + (
-      tema.nome.includes("Sniper")
-        ? "O tiro mais difícil que tentei acertar no Wildlands!"
-        : tema.nome.includes("Infiltração")
-        ? "Consegui entrar na base sem ser detectado?"
-        : tema.nome.includes("Combates")
-        ? "Um erro transformou a missão em um combate total!"
-        : "A operação mais tensa da Bolívia!"
-    );
-    item.appendChild(sugestao);
+    const gancho = document.createElement("p");
+    gancho.textContent = "🎬 GANCHO — primeiros 3 segundos: " + ideia.gancho;
 
-    painel.appendChild(item);
+    const gravacao = document.createElement("p");
+    gravacao.textContent = "🎮 COMO GRAVAR: " + ideia.gravacao;
+
+    [gancho, gravacao].forEach(function(texto) {
+      texto.style.cssText =
+        "color:#f1f5ff;font-size:14px;line-height:1.6;margin-top:12px;";
+    });
+
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.textContent = "📋 Copiar ideia";
+    botao.style.cssText =
+      "background:linear-gradient(90deg,#4387ff,#20c997);" +
+      "color:#fff;border:0;border-radius:9px;padding:10px 14px;" +
+      "font-weight:700;cursor:pointer;margin-top:8px;";
+
+    botao.addEventListener("click", async function() {
+      const texto =
+        ideia.titulo + "\n\n" +
+        "GANCHO: " + ideia.gancho + "\n\n" +
+        "COMO GRAVAR: " + ideia.gravacao;
+
+      try {
+        await navigator.clipboard.writeText(texto);
+        botao.textContent = "✅ Ideia copiada!";
+      } catch (erro) {
+        botao.textContent = "Selecione e copie o texto manualmente";
+      }
+    });
+
+    cartao.appendChild(titulo);
+    cartao.appendChild(tema);
+    cartao.appendChild(gancho);
+    cartao.appendChild(gravacao);
+    cartao.appendChild(botao);
+
+    painel.appendChild(cartao);
   });
 
   adicionarTexto(
-    "Observação: as sugestões são baseadas nos títulos dos vídeos carregados. " +
-    "Visualizações não garantem o desempenho de novos Shorts."
+    "As ideias são sugestões baseadas nos títulos e nas visualizações dos vídeos carregados. " +
+    "Confira as gravações reais antes de escolher os trechos. O desempenho futuro não é garantido."
   );
-}
   init();
 </script>
 </body>
