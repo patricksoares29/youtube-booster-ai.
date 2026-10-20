@@ -345,14 +345,33 @@ function addMetric(){
  showNotice("Registro de desempenho salvo.");
 }
 
+
 function changeStatus(id){
- const c=contents.find(x=>x.id===id);
- if(!c)return;
- const statuses=["Ideia","Planejado","Publicado"];
- c.status=statuses[(statuses.indexOf(c.status)+1)%statuses.length];
- save();
- render();
- showNotice("Status atualizado: "+c.status);
+  const c = contents.find(x => x.id === id);
+  if (!c) return;
+
+  const statuses = ["Ideia", "Planejado", "Publicado"];
+  const options = statuses
+    .map((status, index) => `${index + 1} - ${status}`)
+    .join("\n");
+
+  const choice = prompt(
+    "Escolha o novo status:\n" + options,
+    String(statuses.indexOf(c.status) + 1)
+  );
+
+  if (choice === null) return;
+
+  const selected = Number(choice);
+  if (!Number.isInteger(selected) || selected < 1 || selected > statuses.length) {
+    showNotice("Opção inválida. O status não foi alterado.");
+    return;
+  }
+
+  c.status = statuses[selected - 1];
+  save();
+  render();
+  showNotice("Status atualizado: " + c.status);
 }
 
 function deleteContent(id){
