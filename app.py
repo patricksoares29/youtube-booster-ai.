@@ -10,6 +10,29 @@ from psycopg2.extras import RealDictCursor
 from flask import Flask, jsonify, redirect, request, session
 
 app = Flask(__name__)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+def conectar_banco():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL não configurada.")
+    return psycopg2.connect(DATABASE_URL)
+
+
+def inicializar_banco():
+    with conectar_banco() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS youtube_tokens (
+                    connection_id TEXT PRIMARY KEY,
+                    tokens JSONB NOT NULL,
+                    criado_em TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+
+
+
+
 from flask_cors import CORS
 
 CORS(
