@@ -7,6 +7,13 @@ import requests
 from flask import Flask, jsonify, redirect, request, session
 
 app = Flask(__name__)
+from flask_cors import CORS
+
+CORS(
+    app,
+    origins=["https://patricksoares29.github.io"],
+    supports_credentials=True
+)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
