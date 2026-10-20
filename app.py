@@ -553,6 +553,54 @@ def criar_rascunho():
         ),
     }), 201
 
+from urllib.parse import urlparse, parse_qs
+
+
+@app.route("/api/live/verificar", methods=["POST"])
+def verificar_live():
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
+
+    if not url:
+        return jsonify({
+            "erro": "Informe o link da live do YouTube."
+        }), 400
+
+    try:
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        video_id = ""
+
+        if host in ("youtube.com", "www.youtube.com", "m.youtube.com"):
+            if parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [""])[0]
+            elif parsed.path.startswith("/live/") or parsed.path.startswith("/shorts/"):
+                video_id = parsed.path.split("/")[2]
+        elif host == "youtu.be":
+            video_id = parsed.path.strip("/").split("/")[0]
+
+        if not video_id or not all(
+            char.isalnum() or char in "_-" for char in video_id
+        ):
+            return jsonify({
+                "erro": "Link inválido. Envie um link de vídeo ou live do YouTube."
+            }), 400
+
+        return jsonify({
+            "status": "link_validado",
+            "video_id": video_id,
+            "url": f"https://www.youtube.com/watch?v={video_id}",
+            "mensagem": (
+                "Formato do link validado. "
+                "A disponibilidade e o acesso ao vídeo ainda precisam ser verificados."
+            )
+        }), 200
+
+    except Exception:
+        app.logger.exception("Falha ao validar link da live")
+        return jsonify({
+            "erro": "Não foi possível validar o link."
+        }), 500
 
 if __name__ == "__main__":
     if not app.secret_key:
