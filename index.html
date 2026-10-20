@@ -94,7 +94,20 @@ a{color:#8cb5ff}
 <p class="small">A conexão utiliza autorização de leitura do YouTube. A publicação automática não está habilitada.</p>
 </div>
 </section>
+<div class="card">
+  <h2>🎬 Vídeos do canal Mister Kenne</h2>
+  <p>Veja seus vídeos publicados e compare as visualizações.</p>
 
+  <div class="actions">
+    <button onclick="carregarVideos()">🔄 Atualizar vídeos</button>
+  </div>
+
+  <div id="videosStatus" class="item">
+    Clique em “Atualizar vídeos” para carregar seus vídeos.
+  </div>
+
+  <div id="listaVideos"></div>
+</div>
 <section id="desempenho" class="panel">
 <div class="card">
 <h2>📈 Registrar desempenho</h2>
@@ -644,7 +657,87 @@ async function connectChannel(){
   showNotice("Falha ao consultar o canal.");
  }
 }
+async function carregarVideos() {
+  const base = (localStorage.getItem("youtube_booster_api") || "")
+    .replace(/\/+$/, "");
 
+  const status = document.getElementById("videosStatus");
+  const lista = document.getElementById("listaVideos");
+
+  if (!base) {
+    status.textContent = "Configure o endereço do backend e conecte sua conta Google.";
+    return;
+  }
+
+  status.textContent = "Carregando vídeos do YouTube...";
+  lista.innerHTML = "";
+
+  try {
+    const resposta = await fetch(base + "/api/videos", {
+      method: "GET",
+      credentials: "include",
+      headers: { "Accept": "application/json" },
+      cache: "no-store"
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(dados.erro || "Erro HTTP " + resposta.status);
+    }
+
+    const videos = dados.videos || [];
+
+    if (!videos.length) {
+      status.textContent = "Nenhum vídeo foi encontrado.";
+      return;
+    }
+
+    status.textContent = "Encontrados " + videos.length + " vídeos.";
+
+    videos.forEach(function(video) {
+      const cartao = document.createElement("div");
+      cartao.className = "item";
+
+      const titulo = document.createElement("h3");
+      titulo.textContent = video.titulo || "Vídeo sem título";
+      cartao.appendChild(titulo);
+
+      if (video.miniatura) {
+        const imagem = document.createElement("img");
+        imagem.src = video.miniatura;
+        imagem.alt = titulo.textContent;
+        imagem.loading = "lazy";
+        imagem.style.width = "100%";
+        imagem.style.maxWidth = "320px";
+        imagem.style.borderRadius = "8px";
+        cartao.appendChild(imagem);
+      }
+
+      const detalhes = document.createElement("p");
+      detalhes.textContent =
+        "👁️ Visualizações: " + Number(video.visualizacoes || 0).toLocaleString("pt-BR") +
+        " | 👍 Curtidas: " + Number(video.curtidas || 0).toLocaleString("pt-BR") +
+        " | 💬 Comentários: " + Number(video.comentarios || 0).toLocaleString("pt-BR");
+
+      cartao.appendChild(detalhes);
+
+      if (video.url) {
+        const link = document.createElement("a");
+        link.href = video.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "▶️ Assistir no YouTube";
+        cartao.appendChild(link);
+      }
+
+      lista.appendChild(cartao);
+    });
+
+  } catch (erro) {
+    status.textContent = "Não foi possível carregar os vídeos: " + erro.message;
+  }
+}
 init();
 </script>
 </body>
