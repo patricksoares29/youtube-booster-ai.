@@ -630,51 +630,65 @@ def acessar_live():
     url = str(data.get("url", "")).strip()
 
     if not url:
-        return jsonify({"erro": "Informe o link da live."}), 400
+        return jsonify({
+            "erro": "Informe o link da live."
+        }), 400
 
-    # Identifica o ID do vídeo pelo link informado.
     import re
     from urllib.parse import urlparse, parse_qs
 
     try:
         parsed = urlparse(url)
-       host = (parsed.hostname or "").lower()
+        host = (parsed.hostname or "").lower()
         video_id = ""
 
         if host == "youtu.be" or host.endswith(".youtu.be"):
             video_id = parsed.path.strip("/").split("/")[0]
+
         elif host == "youtube.com" or host.endswith(".youtube.com"):
             if parsed.path == "/watch":
-                video_id = parse_qs(parsed.query).get("v", [""])[0]
+                video_id = parse_qs(
+                    parsed.query
+                ).get("v", [""])[0]
             else:
                 partes = parsed.path.strip("/").split("/")
+
                 if len(partes) >= 2 and partes[0] in (
-                    "live", "shorts", "embed"
+                    "live",
+                    "shorts",
+                    "embed",
                 ):
                     video_id = partes[1]
 
-        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
-            app.logger.warning(
-                "ID de vídeo inválido extraído do link: %r",
-                video_id
-            )
+        if not re.fullmatch(
+            r"[A-Za-z0-9_-]{11}",
+            video_id or "",
+        ):
             return jsonify({
-                "erro": "Link inválido. Confira se o endereço é do YouTube."
+                "erro": (
+                    "Link inválido. Confira se o endereço "
+                    "é do YouTube."
+                )
             }), 400
 
-
-
-        # Reutiliza a sessão autenticada do painel.
         connection_id = session.get("connection_id")
+
         if not connection_id:
             return jsonify({
-                "erro": "Conecte novamente sua conta do YouTube pelo painel."
+                "erro": (
+                    "Conecte novamente sua conta do YouTube "
+                    "pelo painel."
+                )
             }), 401
 
         tokens = obter_tokens_validos(connection_id)
+
         if not tokens:
             return jsonify({
-                "erro": "Não foi possível obter um token válido. Reconecte o YouTube."
+                "erro": (
+                    "Não foi possível obter um token válido. "
+                    "Reconecte o YouTube."
+                )
             }), 401
 
         if isinstance(tokens, dict):
@@ -684,10 +698,12 @@ def acessar_live():
 
         if not access_token:
             return jsonify({
-                "erro": "Token de acesso indisponível. Reconecte o YouTube."
+                "erro": (
+                    "Token de acesso indisponível. "
+                    "Reconecte sua conta do YouTube."
+                )
             }), 401
 
-        # Consulta os metadados pela API oficial do YouTube.
         resposta = requests.get(
             "https://www.googleapis.com/youtube/v3/videos",
             params={
@@ -702,16 +718,22 @@ def acessar_live():
 
         if resposta.status_code == 401:
             return jsonify({
-                "erro": "A autorização expirou. Reconecte sua conta do YouTube."
+                "erro": (
+                    "A autorização expirou. Reconecte "
+                    "sua conta do YouTube."
+                )
             }), 401
 
         if resposta.status_code == 403:
             app.logger.error(
                 "API do YouTube retornou 403: %s",
-                resposta.text[:1000]
+                resposta.text[:1000],
             )
             return jsonify({
-                "erro": "A API do YouTube recusou a consulta. Verifique as credenciais e a cota do projeto."
+                "erro": (
+                    "A API do YouTube recusou a consulta. "
+                    "Verifique as credenciais e a cota."
+                )
             }), 502
 
         resposta.raise_for_status()
@@ -719,43 +741,68 @@ def acessar_live():
 
         if not itens:
             return jsonify({
-                "erro": "A API não encontrou esse vídeo ou não disponibilizou seus dados."
+                "erro": (
+                    "A API não encontrou esse vídeo ou "
+                    "não disponibilizou seus dados."
+                )
             }), 404
 
         video = itens[0]
         snippet = video.get("snippet", {})
-        duracao_iso = video.get("contentDetails", {}).get("duration", "")
+        duracao_iso = video.get(
+            "contentDetails", {}
+        ).get("duration", "")
 
-        # Converte a duração ISO 8601 (ex.: PT1H2M3S) para segundos.
         correspondencia = re.fullmatch(
             r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-            duracao_iso
+            duracao_iso,
         )
 
         duracao_segundos = None
+
         if correspondencia:
             horas, minutos, segundos = (
-                int(valor or 0) for valor in correspondencia.groups()
+                int(valor or 0)
+                for valor in correspondencia.groups()
             )
-            duracao_segundos = horas * 3600 + minutos * 60 + segundos
+
+            duracao_segundos = (
+                horas * 3600
+                + minutos * 60
+                + segundos
+            )
 
         return jsonify({
             "status": "acesso_confirmado",
             "video_id": video_id,
             "titulo": snippet.get("title"),
             "duracao_segundos": duracao_segundos,
-            "mensagem": "Metadados consultados pela API oficial do YouTube. O vídeo ainda não foi baixado."
+            "mensagem": (
+                "Metadados consultados pela API oficial "
+                "do YouTube. O vídeo ainda não foi baixado."
+            ),
         }), 200
 
     except requests.RequestException:
-        app.logger.exception("Falha na consulta à API oficial do YouTube")
+        app.logger.exception(
+            "Falha na consulta à API oficial do YouTube"
+        )
         return jsonify({
-            "erro": "Não foi possível consultar a API do YouTube. Verifique os logs do servidor."
+            "erro": (
+                "Não foi possível consultar a API do YouTube. "
+                "Verifique os logs do servidor."
+            )
         }), 502
+
     except Exception:
-        app.logger.exception("Falha ao acessar metadados da live")
+        app.logger.exception(
+            "Falha ao acessar metadados da live"
+        )
         return jsonify({
-            "erro": "Ocorreu um erro ao consultar os metadados da live."
+            "erro": (
+                "Ocorreu um erro ao consultar os metadados "
+                "da live."
+            )
         }), 500
 
 @app.route("/api/shorts/preparar", methods=["POST"])
