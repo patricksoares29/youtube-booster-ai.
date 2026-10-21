@@ -1235,6 +1235,125 @@ document.getElementById("botao-testar-live").addEventListener("click", async fun
     this.disabled = false;
   }
 });
+
+<section class="card" id="publicar-youtube">
+  <h2>📤 Publicar vídeo no YouTube</h2>
+  <p>Envie um vídeo do seu computador para o canal Mister Kenne.</p>
+
+  <form id="form-publicar-youtube">
+    <label for="pub-titulo">Título do vídeo</label>
+    <input
+      id="pub-titulo"
+      name="titulo"
+      type="text"
+      maxlength="100"
+      required
+      placeholder="Digite o título do vídeo"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    >
+
+    <label for="pub-descricao">Descrição</label>
+    <textarea
+      id="pub-descricao"
+      name="descricao"
+      rows="5"
+      placeholder="Descrição do vídeo"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    ></textarea>
+
+    <label for="pub-video">Arquivo de vídeo MP4</label>
+    <input
+      id="pub-video"
+      name="video"
+      type="file"
+      accept=".mp4,video/mp4"
+      required
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;"
+    >
+
+    <label for="pub-privacidade">Privacidade</label>
+    <select
+      id="pub-privacidade"
+      name="privacidade"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    >
+      <option value="private" selected>Privado — somente você</option>
+      <option value="unlisted">Não listado — quem tiver o link</option>
+      <option value="public">Público — todos podem assistir</option>
+    </select>
+
+    <button
+      id="pub-botao"
+      type="submit"
+      style="padding:12px 18px;background:#e53935;color:white;border:0;border-radius:8px;cursor:pointer;"
+    >
+      Enviar vídeo privado
+    </button>
+
+    <p id="pub-aviso" role="status" aria-live="polite"></p>
+  </form>
+</section>
+
+<script>
+document.getElementById("pub-privacidade").addEventListener("change", function () {
+  const botao = document.getElementById("pub-botao");
+  const nomes = {
+    private: "Enviar vídeo privado",
+    unlisted: "Enviar vídeo não listado",
+    public: "Enviar vídeo público"
+  };
+  botao.textContent = nomes[this.value];
+});
+
+document.getElementById("form-publicar-youtube").addEventListener("submit", async function (evento) {
+  evento.preventDefault();
+
+  const aviso = document.getElementById("pub-aviso");
+  const botao = document.getElementById("pub-botao");
+  const video = document.getElementById("pub-video").files[0];
+
+  if (!video) {
+    aviso.textContent = "Selecione um vídeo MP4.";
+    return;
+  }
+
+  if (!confirm("Confirma o envio deste vídeo ao YouTube?")) {
+    return;
+  }
+
+  const dados = new FormData();
+  dados.append("titulo", document.getElementById("pub-titulo").value.trim());
+  dados.append("descricao", document.getElementById("pub-descricao").value);
+  dados.append("privacidade", document.getElementById("pub-privacidade").value);
+  dados.append("video", video);
+
+  botao.disabled = true;
+  aviso.textContent = "Enviando vídeo. Não feche esta página.";
+
+  try {
+    const resposta = await fetch(
+      "https://youtube-booster-ai.onrender.com/api/publicacao/enviar",
+      {
+        method: "POST",
+        credentials: "include",
+        body: dados
+      }
+    );
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      aviso.textContent = "Erro: " + (resultado.erro || "Não foi possível enviar o vídeo.");
+      return;
+    }
+
+    aviso.textContent = "Vídeo recebido pelo YouTube: " + resultado.url;
+  } catch (erro) {
+    aviso.textContent = "Falha na conexão. Verifique o servidor antes de tentar novamente.";
+  } finally {
+    botao.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
