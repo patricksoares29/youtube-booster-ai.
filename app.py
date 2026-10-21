@@ -635,7 +635,7 @@ def acessar_live():
         return jsonify({
             "erro": "O servidor não conseguiu acessar os metadados do vídeo."
         }), 502
-        @app.route("/api/shorts/preparar", methods=["POST"])
+@app.route("/api/shorts/preparar", methods=["POST"])
 def preparar_shorts():
     data = request.get_json(silent=True) or {}
     video_id = str(data.get("video_id", "")).strip()
