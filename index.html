@@ -1181,5 +1181,60 @@ function analisarDesempenhoVideos() {
   
   init();
 </script>
+
+<section id="teste-live" style="margin:20px 0;padding:16px;background:#1b1b1b;color:white;border-radius:12px;">
+  <h2>🎮 Testar acesso à live</h2>
+  <label for="link-live">Link da live do YouTube</label>
+  <input
+    id="link-live"
+    type="url"
+    placeholder="Cole aqui o link da sua live"
+    style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+  >
+  <button
+    id="botao-testar-live"
+    type="button"
+    style="padding:12px 18px;background:#e53935;color:white;border:0;border-radius:8px;cursor:pointer;"
+  >
+    Testar live
+  </button>
+  <pre id="resultado-teste-live" style="white-space:pre-wrap;overflow-wrap:anywhere;"></pre>
+</section>
+
+<script>
+document.getElementById("botao-testar-live").addEventListener("click", async function () {
+  const campo = document.getElementById("link-live");
+  const resultado = document.getElementById("resultado-teste-live");
+  const url = campo.value.trim();
+
+  if (!url) {
+    resultado.textContent = "Cole o link da live primeiro.";
+    return;
+  }
+
+  resultado.textContent = "Consultando o servidor...";
+  this.disabled = true;
+
+  try {
+    const resposta = await fetch(
+      "https://youtube-booster-ai.onrender.com/api/live/acessar",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      }
+    );
+
+    const dados = await resposta.json();
+    resultado.textContent = JSON.stringify(dados, null, 2);
+  } catch (erro) {
+    resultado.textContent =
+      "Não foi possível concluir o teste. Verifique a conexão e tente novamente.";
+  } finally {
+    this.disabled = false;
+  }
+});
+</script>
 </body>
 </html>
