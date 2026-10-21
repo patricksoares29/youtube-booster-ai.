@@ -902,12 +902,17 @@ def preparar_shorts():
 def verificar_ferramentas_cortes():
     import shutil
 
+    try:
+        import faster_whisper
+        transcricao_disponivel = True
+    except ImportError:
+        transcricao_disponivel = False
+
     return {
         "yt_dlp": shutil.which("yt-dlp") is not None,
         "ffmpeg": shutil.which("ffmpeg") is not None,
-        "transcricao": True,
+        "transcricao": transcricao_disponivel,
     }
-
 
 @app.route("/api/shorts/ferramentas", methods=["GET"])
 def status_ferramentas_cortes():
