@@ -312,6 +312,7 @@ a{color:#8cb5ff}
 <footer>YouTube Booster AI · Ferramenta de planejamento de conteúdo</footer>
 
 <script>
+  
 "use strict";
 
 const KEY="youtube_booster_ai_v1";
@@ -1382,5 +1383,56 @@ document.getElementById("form-publicar-youtube").addEventListener("submit", asyn
   }
 });
 </script>
+  
+<script>
+document.getElementById("form-cortes-ia").addEventListener("submit", async function(evento) {
+  evento.preventDefault();
+
+  const campo = document.getElementById("link-live-cortes");
+  const duracao = document.getElementById("duracao-corte").value;
+  const status = document.getElementById("status-cortes-ia");
+  const botao = this.querySelector('button[type="submit"]');
+
+  const url = campo.value.trim();
+  const base = "https://youtube-booster-ai.onrender.com";
+
+  botao.disabled = true;
+  status.textContent = "Validando o link da live no servidor...";
+
+  try {
+    const resposta = await fetch(base + "/api/shorts/preparar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        url: url,
+        duracao: Number(duracao),
+        quantidade: 10
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(dados.erro || "Erro HTTP " + resposta.status);
+    }
+
+    status.textContent =
+      "Link validado! ID: " + dados.video_id +
+      ". Duração escolhida: até " + duracao +
+      " segundos. " +
+      (dados.mensagem || "Pedido recebido pelo servidor.");
+
+  } catch (erro) {
+    status.textContent =
+      "Não foi possível validar o pedido: " + erro.message;
+  } finally {
+    botao.disabled = false;
+  }
+});
+</script>
+
 </body>
 </html>
