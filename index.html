@@ -248,6 +248,34 @@ a{color:#8cb5ff}
   </form>
 </section>
 </section>
+
+<section id="cortes-ia" class="panel">
+  <div class="card">
+    <h2>✂️ Cortes automáticos com IA</h2>
+    <p>Cole o link da sua live do YouTube para preparar a análise dos melhores momentos e gerar Shorts.</p>
+
+    <form id="form-cortes-ia">
+      <label for="link-live-cortes">Link da live do YouTube</label>
+      <input
+        id="link-live-cortes"
+        name="url"
+        type="url"
+        placeholder="https://www.youtube.com/live/..."
+        required
+      >
+
+      <label for="duracao-corte">Duração desejada dos cortes</label>
+      <select id="duracao-corte" name="duracao">
+        <option value="15">Até 15 segundos</option>
+        <option value="30" selected>Até 30 segundos</option>
+        <option value="60">Até 60 segundos</option>
+      </select>
+
+      <button type="submit">🔎 Analisar live com IA</button>
+      <p id="status-cortes-ia" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
 <section id="calendario" class="panel">
 <div class="card">
 <h2>🗓️ Calendário editorial</h2>
