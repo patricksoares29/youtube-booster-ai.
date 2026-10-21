@@ -626,7 +626,7 @@ def acessar_live():
                 video_id = parse_qs(parsed.query).get("v", [""])[0]
             else:
                 partes = parsed.path.strip("/").split("/")
-        if len(partes) >= 2 and partes[0] in (
+                if len(partes) >= 2 and partes[0] in (
                     "live", "shorts", "embed"
                 ):
                     video_id = partes[1]
@@ -639,6 +639,7 @@ def acessar_live():
             return jsonify({
                 "erro": "Link inválido. Confira se o endereço é do YouTube."
             }), 400
+
 
 
         # Reutiliza a sessão autenticada do painel.
