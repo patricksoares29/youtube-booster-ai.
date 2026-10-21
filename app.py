@@ -907,7 +907,8 @@ def preparar_shorts():
 
 @app.route("/api/shorts/testar-geracao", methods=["POST"])
 def testar_geracao_short():
-    import json
+    import re
+    from urllib.parse import urlparse, parse_qs
 
     data = request.get_json(silent=True) or {}
     url = str(data.get("url", "")).strip()
@@ -916,38 +917,50 @@ def testar_geracao_short():
         return jsonify({"erro": "Informe o link do seu vídeo."}), 400
 
     try:
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         host = (parsed.hostname or "").lower()
+        video_id = ""
 
-        hosts_validos = {
+        if host in ("youtu.be", "www.youtu.be"):
+            video_id = parsed.path.strip("/").split("/")[0]
+
+        elif host in (
             "youtube.com",
             "www.youtube.com",
             "m.youtube.com",
-            "youtu.be",
-            "www.youtu.be",
-        }
+        ):
+            if parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [""])[0]
+            else:
+                partes = parsed.path.strip("/").split("/")
+                if len(partes) >= 2 and partes[0] in (
+                    "live", "shorts", "embed"
+                ):
+                    video_id = partes[1]
 
-        if host not in hosts_validos:
-            return jsonify({"erro": "Informe um link válido do YouTube."}), 400
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+            return jsonify({
+                "erro": "Link inválido. Confira o endereço do YouTube."
+            }), 400
 
         return jsonify({
-            "status": "teste_preparado",
-            "url": url,
-            "duracao_maxima_segundos": 15,
+            "status": "pedido_validado",
+            "video_id": video_id,
+            "duracao_maxima_segundos": 30,
             "formato": "9:16",
             "publicado": False,
             "geracao_iniciada": False,
             "mensagem": (
-                "A rota de teste foi criada, mas o processamento "
-                "ainda não foi iniciado."
+                "Link validado. O processamento real ainda "
+                "precisa ser implementado."
             ),
         }), 200
 
     except Exception:
         app.logger.exception("Falha ao preparar teste de Short")
-        return jsonify({"erro": "Não foi possível preparar o teste."}), 500
+        return jsonify({
+            "erro": "Não foi possível preparar o teste."
+        }), 500
 def verificar_ferramentas_cortes():
     import shutil
 
