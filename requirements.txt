@@ -6,3 +6,4 @@ psycopg2-binary
 yt-dlp
 imageio-ffmpeg
 faster-whisper
+av==14.4.0
