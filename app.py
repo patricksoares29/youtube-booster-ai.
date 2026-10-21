@@ -571,7 +571,6 @@ def verificar_live():
         parsed = urlparse(url)
         host = (parsed.hostname or "").lower()
         video_id = ""
-
         if host in (
             "youtube.com",
             "www.youtube.com",
