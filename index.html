@@ -190,8 +190,64 @@ a{color:#8cb5ff}
 <textarea id="generated" style="min-height:290px" placeholder="As sugestões aparecerão aqui..."></textarea>
 </div>
 <div class="card"><h2>🗂️ Histórico de sugestões</h2><div id="ideaBank"></div></div>
-</section>
+<section class="card" id="publicar-youtube">
+  <h2>:outbox_tray: Publicar vídeo no YouTube</h2>
+  <p>Envie um vídeo do seu computador para o canal Mister Kenne.</p>
 
+  <form id="form-publicar-youtube">
+    <label for="pub-titulo">Título do vídeo</label>
+    <input
+      id="pub-titulo"
+      name="titulo"
+      type="text"
+      maxlength="100"
+      required
+      placeholder="Digite o título do vídeo"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    >
+
+    <label for="pub-descricao">Descrição</label>
+    <textarea
+      id="pub-descricao"
+      name="descricao"
+      rows="5"
+      placeholder="Descrição do vídeo"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    ></textarea>
+
+    <label for="pub-video">Arquivo de vídeo MP4</label>
+    <input
+      id="pub-video"
+      name="video"
+      type="file"
+      accept=".mp4,video/mp4"
+      required
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;"
+    >
+
+    <label for="pub-privacidade">Privacidade</label>
+    <select
+      id="pub-privacidade"
+      name="privacidade"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
+    >
+      <option value="private" selected>Privado — somente você</option>
+      <option value="unlisted">Não listado — quem tiver o link</option>
+      <option value="public">Público — todos podem assistir</option>
+    </select>
+
+    <button
+      id="pub-botao"
+      type="submit"
+      style="padding:12px 18px;background:#e53935;color:white;border:0;border-radius:8px;cursor:pointer;"
+    >
+      Enviar vídeo privado
+    </button>
+
+    <p id="pub-aviso" role="status" aria-live="polite"></p>
+  </form>
+</section>
+</section>
 <section id="calendario" class="panel">
 <div class="card">
 <h2>🗓️ Calendário editorial</h2>
@@ -1235,64 +1291,7 @@ document.getElementById("botao-testar-live").addEventListener("click", async fun
     this.disabled = false;
   }
 });
-
-<section class="card" id="publicar-youtube">
-  <h2>📤 Publicar vídeo no YouTube</h2>
-  <p>Envie um vídeo do seu computador para o canal Mister Kenne.</p>
-
-  <form id="form-publicar-youtube">
-    <label for="pub-titulo">Título do vídeo</label>
-    <input
-      id="pub-titulo"
-      name="titulo"
-      type="text"
-      maxlength="100"
-      required
-      placeholder="Digite o título do vídeo"
-      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
-    >
-
-    <label for="pub-descricao">Descrição</label>
-    <textarea
-      id="pub-descricao"
-      name="descricao"
-      rows="5"
-      placeholder="Descrição do vídeo"
-      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
-    ></textarea>
-
-    <label for="pub-video">Arquivo de vídeo MP4</label>
-    <input
-      id="pub-video"
-      name="video"
-      type="file"
-      accept=".mp4,video/mp4"
-      required
-      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;"
-    >
-
-    <label for="pub-privacidade">Privacidade</label>
-    <select
-      id="pub-privacidade"
-      name="privacidade"
-      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0;color:#111;"
-    >
-      <option value="private" selected>Privado — somente você</option>
-      <option value="unlisted">Não listado — quem tiver o link</option>
-      <option value="public">Público — todos podem assistir</option>
-    </select>
-
-    <button
-      id="pub-botao"
-      type="submit"
-      style="padding:12px 18px;background:#e53935;color:white;border:0;border-radius:8px;cursor:pointer;"
-    >
-      Enviar vídeo privado
-    </button>
-
-    <p id="pub-aviso" role="status" aria-live="polite"></p>
-  </form>
-</section>
+</script>
 
 <script>
 document.getElementById("pub-privacidade").addEventListener("change", function () {
@@ -1354,7 +1353,6 @@ document.getElementById("form-publicar-youtube").addEventListener("submit", asyn
     botao.disabled = false;
   }
 });
-</script>
 </script>
 </body>
 </html>
