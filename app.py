@@ -626,12 +626,11 @@ def acessar_live():
                 video_id = parse_qs(parsed.query).get("v", [""])[0]
             else:
                 partes = parsed.path.strip("/").split("/")
-                if len(partes) >= 2 and partes[0] in (
+        if len(partes) >= 2 and partes[0] in (
                     "live", "shorts", "embed"
                 ):
                     video_id = partes[1]
 
-       
         if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
             app.logger.warning(
                 "ID de vídeo inválido extraído do link: %r",
