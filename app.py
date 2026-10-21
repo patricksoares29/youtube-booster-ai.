@@ -31,10 +31,11 @@ CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
 
-SCOPES = [
-    "https://www.googleapis.com/auth/youtube.readonly"
-]
 
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload"
+]
 
 def conectar_banco():
     if not DATABASE_URL:
