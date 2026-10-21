@@ -898,6 +898,32 @@ def preparar_shorts():
         )
     }), 200
 
+
+def verificar_ferramentas_cortes():
+    import shutil
+
+    return {
+        "yt_dlp": shutil.which("yt-dlp") is not None,
+        "ffmpeg": shutil.which("ffmpeg") is not None,
+        "transcricao": True,
+    }
+
+
+@app.route("/api/shorts/ferramentas", methods=["GET"])
+def status_ferramentas_cortes():
+    ferramentas = verificar_ferramentas_cortes()
+
+    return jsonify({
+        "ferramentas": ferramentas,
+        "pronto_para_processar": (
+            ferramentas["yt_dlp"]
+            and ferramentas["ffmpeg"]
+        ),
+        "mensagem": (
+            "Verificação concluída. "
+            "A geração dos cortes ainda não foi executada."
+        ),
+    }), 200
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
