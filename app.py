@@ -1179,6 +1179,110 @@ def enviar_video_short():
             "A análise e a geração do Short ainda não foram executadas."
         )
     }), 201
+@app.route("/api/shorts/processar-upload", methods=["POST"])
+def processar_upload_short():
+    import os
+    import shutil
+    import tempfile
+    import subprocess
+    import re
+    from flask import request, jsonify, send_file
+
+    arquivo = request.files.get("video")
+
+    if not arquivo or not arquivo.filename:
+        return jsonify({"erro": "Selecione um arquivo MP4."}), 400
+
+    if not arquivo.filename.lower().endswith(".mp4"):
+        return jsonify({"erro": "Envie um arquivo MP4."}), 400
+
+    pasta = tempfile.mkdtemp(prefix="short_processar_")
+    origem = os.path.join(pasta, "origem.mp4")
+    audio = os.path.join(pasta, "audio.wav")
+    saida = os.path.join(pasta, "short_15s.mp4")
+
+    try:
+        arquivo.save(origem)
+
+        if os.path.getsize(origem) == 0:
+            return jsonify({"erro": "O arquivo está vazio."}), 400
+
+        ffmpeg = shutil.which("ffmpeg")
+        if not ffmpeg:
+            try:
+                import imageio_ffmpeg
+                ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+            except Exception:
+                return jsonify({"erro": "FFmpeg não está disponível."}), 503
+
+        # Extrai áudio para a transcrição.
+        subprocess.run(
+            [
+                ffmpeg, "-y", "-i", origem, "-t", "15",
+                "-vn", "-ac", "1", "-ar", "16000", audio
+            ],
+            check=True,
+            capture_output=True,
+            timeout=90
+        )
+
+        # Transcreve o áudio em português.
+        from faster_whisper import WhisperModel
+        modelo = WhisperModel(
+            "tiny",
+            device="cpu",
+            compute_type="int8"
+        )
+        segmentos, _ = modelo.transcribe(audio, language="pt")
+        transcricao = " ".join(
+            s.text.strip() for s in segmentos
+        ).strip()
+
+        # Renderiza o primeiro corte vertical.
+        subprocess.run(
+            [
+                ffmpeg, "-y", "-i", origem, "-t", "15",
+                "-vf",
+                "scale=720:1280:force_original_aspect_ratio=increase,"
+                "crop=720:1280",
+                "-c:v", "libx264", "-preset", "ultrafast",
+                "-crf", "27", "-c:a", "aac", "-b:a", "128k",
+                "-movflags", "+faststart", saida
+            ],
+            check=True,
+            capture_output=True,
+            timeout=180
+        )
+
+        resposta = send_file(
+            saida,
+            mimetype="video/mp4",
+            as_attachment=True,
+            download_name="short_15s.mp4"
+        )
+
+        # Mantém a pasta até o término do envio da resposta.
+        resposta.call_on_close(
+            lambda: shutil.rmtree(pasta, ignore_errors=True)
+        )
+
+        resposta.headers["X-Transcricao"] = (
+            transcricao[:500] if transcricao else "Sem fala detectada"
+        )
+        return resposta
+
+    except subprocess.TimeoutExpired:
+        shutil.rmtree(pasta, ignore_errors=True)
+        return jsonify({
+            "erro": "O processamento excedeu o tempo limite."
+        }), 504
+
+    except Exception:
+        app.logger.exception("Falha ao processar o MP4 enviado.")
+        shutil.rmtree(pasta, ignore_errors=True)
+        return jsonify({
+            "erro": "Não foi possível processar o MP4. Consulte os logs do Render."
+        }), 500
 @app.route("/api/diagnostico-rotas", methods=["GET"])
 def diagnostico_rotas():
     regras = sorted(
