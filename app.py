@@ -635,6 +635,28 @@ def acessar_live():
         return jsonify({
             "erro": "O servidor não conseguiu acessar os metadados do vídeo."
         }), 502
+        @app.route("/api/shorts/preparar", methods=["POST"])
+def preparar_shorts():
+    data = request.get_json(silent=True) or {}
+    video_id = str(data.get("video_id", "")).strip()
+
+    if not video_id or not all(
+        c.isalnum() or c in "_-" for c in video_id
+    ):
+        return jsonify({
+            "erro": "Informe um ID válido de vídeo do YouTube."
+        }), 400
+
+    return jsonify({
+        "status": "pedido_validado",
+        "video_id": video_id,
+        "quantidade_planejada": 10,
+        "formato": "vertical 9:16",
+        "mensagem": (
+            "Pedido validado. O download, a seleção dos momentos "
+            "e a geração dos Shorts ainda não foram executados."
+        )
+    }), 200
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
