@@ -1134,7 +1134,23 @@ def gerar_teste_short():
         # Nesta versão, a limpeza imediata será evitada para permitir
         # que o arquivo seja servido pela resposta.
         pass
+@app.route("/api/diagnostico-rotas", methods=["GET"])
+def diagnostico_rotas():
+    regras = sorted(
+        str(regra)
+        for regra in app.url_map.iter_rules()
+    )
 
+    return jsonify({
+        "servidor": "online",
+        "rota_gerar_teste": (
+            "/api/shorts/gerar-teste" in regras
+        ),
+        "rotas": [
+            regra for regra in regras
+            if "shorts" in regra or "diagnostico" in regra
+        ]
+    })
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
