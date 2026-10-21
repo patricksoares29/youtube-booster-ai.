@@ -6,3 +6,4 @@ psycopg2-binary
 yt-dlp
 imageio-ffmpeg
 faster-whisper
+python-3.12.11
