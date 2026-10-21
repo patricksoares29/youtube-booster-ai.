@@ -601,6 +601,7 @@ def verificar_live():
         return jsonify({
             "erro": "Não foi possível validar o link."
         }), 500
+
 @app.route("/api/live/acessar", methods=["POST"])
 def acessar_live():
     data = request.get_json(silent=True) or {}
@@ -609,32 +610,126 @@ def acessar_live():
     if not url:
         return jsonify({"erro": "Informe o link da live."}), 400
 
+    # Identifica o ID do vídeo pelo link informado.
+    import re
+    from urllib.parse import urlparse, parse_qs
+
     try:
-        import yt_dlp
+        parsed = urlparse(url)
+        host = parsed.netloc.lower().split(":")[0]
+        video_id = ""
 
-        opcoes = {
-            "quiet": True,
-            "no_warnings": True,
-            "skip_download": True,
-            "extract_flat": False,
-            "socket_timeout": 15,
-        }
+        if host == "youtu.be" or host.endswith(".youtu.be"):
+            video_id = parsed.path.strip("/").split("/")[0]
+        elif host == "youtube.com" or host.endswith(".youtube.com"):
+            if parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [""])[0]
+            else:
+                partes = parsed.path.strip("/").split("/")
+                if len(partes) >= 2 and partes[0] in (
+                    "live", "shorts", "embed"
+                ):
+                    video_id = partes[1]
 
-        with yt_dlp.YoutubeDL(opcoes) as ydl:
-            info = ydl.extract_info(url, download=False)
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+            return jsonify({
+                "erro": "Link inválido. Informe um link válido do YouTube."
+            }), 400
+
+        # Reutiliza a sessão autenticada do painel.
+        connection_id = session.get("connection_id")
+        if not connection_id:
+            return jsonify({
+                "erro": "Conecte novamente sua conta do YouTube pelo painel."
+            }), 401
+
+        tokens = obter_tokens_validos(connection_id)
+        if not tokens:
+            return jsonify({
+                "erro": "Não foi possível obter um token válido. Reconecte o YouTube."
+            }), 401
+
+        if isinstance(tokens, dict):
+            access_token = tokens.get("access_token")
+        else:
+            access_token = tokens
+
+        if not access_token:
+            return jsonify({
+                "erro": "Token de acesso indisponível. Reconecte o YouTube."
+            }), 401
+
+        # Consulta os metadados pela API oficial do YouTube.
+        resposta = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={
+                "part": "snippet,contentDetails",
+                "id": video_id,
+            },
+            headers={
+                "Authorization": f"Bearer {access_token}"
+            },
+            timeout=20,
+        )
+
+        if resposta.status_code == 401:
+            return jsonify({
+                "erro": "A autorização expirou. Reconecte sua conta do YouTube."
+            }), 401
+
+        if resposta.status_code == 403:
+            app.logger.error(
+                "API do YouTube retornou 403: %s",
+                resposta.text[:1000]
+            )
+            return jsonify({
+                "erro": "A API do YouTube recusou a consulta. Verifique as credenciais e a cota do projeto."
+            }), 502
+
+        resposta.raise_for_status()
+        itens = resposta.json().get("items", [])
+
+        if not itens:
+            return jsonify({
+                "erro": "A API não encontrou esse vídeo ou não disponibilizou seus dados."
+            }), 404
+
+        video = itens[0]
+        snippet = video.get("snippet", {})
+        duracao_iso = video.get("contentDetails", {}).get("duration", "")
+
+        # Converte a duração ISO 8601 (ex.: PT1H2M3S) para segundos.
+        correspondencia = re.fullmatch(
+            r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
+            duracao_iso
+        )
+
+        duracao_segundos = None
+        if correspondencia:
+            horas, minutos, segundos = (
+                int(valor or 0) for valor in correspondencia.groups()
+            )
+            duracao_segundos = horas * 3600 + minutos * 60 + segundos
 
         return jsonify({
             "status": "acesso_confirmado",
-            "titulo": info.get("title"),
-            "duracao_segundos": info.get("duration"),
-            "mensagem": "O servidor conseguiu ler os metadados do vídeo."
+            "video_id": video_id,
+            "titulo": snippet.get("title"),
+            "duracao_segundos": duracao_segundos,
+            "mensagem": "Metadados consultados pela API oficial do YouTube. O vídeo ainda não foi baixado."
         }), 200
 
-    except Exception:
-        app.logger.exception("Falha ao acessar vídeo do YouTube")
+    except requests.RequestException:
+        app.logger.exception("Falha na consulta à API oficial do YouTube")
         return jsonify({
-            "erro": "O servidor não conseguiu acessar os metadados do vídeo."
+            "erro": "Não foi possível consultar a API do YouTube. Verifique os logs do servidor."
         }), 502
+    except Exception:
+        app.logger.exception("Falha ao acessar metadados da live")
+        return jsonify({
+            "erro": "Ocorreu um erro ao consultar os metadados da live."
+        }), 500
+
 @app.route("/api/shorts/preparar", methods=["POST"])
 def preparar_shorts():
     data = request.get_json(silent=True) or {}
