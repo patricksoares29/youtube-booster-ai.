@@ -1227,13 +1227,32 @@ def processar_upload_short():
         )
 
         # Transcreve o áudio em português.
+        import numpy as np
+        import wave
         from faster_whisper import WhisperModel
+
+        with wave.open(audio, "rb") as wav:
+            taxa = wav.getframerate()
+            canais = wav.getnchannels()
+            amostras = wav.readframes(wav.getnframes())
+
+        audio_array = np.frombuffer(amostras, dtype=np.int16)
+        audio_array = audio_array.astype(np.float32) / 32768.0
+
+        if canais > 1:
+            audio_array = audio_array.reshape(-1, canais).mean(axis=1)
+
         modelo = WhisperModel(
             "tiny",
             device="cpu",
             compute_type="int8"
         )
-        segmentos, _ = modelo.transcribe(audio, language="pt")
+
+        segmentos, _ = modelo.transcribe(
+            audio_array,
+            language="pt",
+           
+        )
         transcricao = " ".join(
             s.text.strip() for s in segmentos
         ).strip()
