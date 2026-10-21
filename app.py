@@ -566,7 +566,7 @@ def verificar_live():
             "erro": "Informe o link da live do YouTube."
         }), 400
 
-       try:
+    try:
         parsed = urlparse(url)
         host = (parsed.hostname or "").lower()
         video_id = ""
