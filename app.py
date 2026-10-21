@@ -1134,6 +1134,51 @@ def gerar_teste_short():
         # Nesta versão, a limpeza imediata será evitada para permitir
         # que o arquivo seja servido pela resposta.
         pass
+@app.route("/api/shorts/enviar-video", methods=["POST"])
+def enviar_video_short():
+    import os
+    import tempfile
+    from flask import request, jsonify
+
+    arquivo = request.files.get("video")
+
+    if not arquivo or not arquivo.filename:
+        return jsonify({
+            "erro": "Selecione um arquivo MP4."
+        }), 400
+
+    if not arquivo.filename.lower().endswith(".mp4"):
+        return jsonify({
+            "erro": "Envie um arquivo com extensão MP4."
+        }), 400
+
+    limite = 500 * 1024 * 1024
+
+    request.max_content_length = limite
+
+    pasta = tempfile.mkdtemp(prefix="youtube_booster_")
+    caminho = os.path.join(pasta, "video.mp4")
+
+    arquivo.save(caminho)
+
+    tamanho = os.path.getsize(caminho)
+
+    if tamanho == 0 or tamanho > limite:
+        os.remove(caminho)
+        os.rmdir(pasta)
+        return jsonify({
+            "erro": "Arquivo vazio ou maior que 500 MB."
+        }), 400
+
+    return jsonify({
+        "status": "video_recebido",
+        "nome": "video.mp4",
+        "tamanho_bytes": tamanho,
+        "mensagem": (
+            "Vídeo recebido pelo servidor. "
+            "A análise e a geração do Short ainda não foram executadas."
+        )
+    }), 201
 @app.route("/api/diagnostico-rotas", methods=["GET"])
 def diagnostico_rotas():
     regras = sorted(
