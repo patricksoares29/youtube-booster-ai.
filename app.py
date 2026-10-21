@@ -991,6 +991,150 @@ def status_ferramentas_cortes():
             "A geração dos cortes ainda não foi executada."
         ),
     }), 200
+
+@app.route("/api/shorts/gerar-teste", methods=["POST"])
+def gerar_teste_short():
+    import os
+    import re
+    import shutil
+    import tempfile
+    import subprocess
+    from urllib.parse import urlparse, parse_qs
+
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
+
+    if not url:
+        return jsonify({"erro": "Informe o link do vídeo."}), 400
+
+    # Aceita somente links conhecidos do YouTube.
+    try:
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        video_id = ""
+
+        if host in ("youtu.be", "www.youtu.be"):
+            video_id = parsed.path.strip("/").split("/")[0]
+        elif host in (
+            "youtube.com", "www.youtube.com",
+            "m.youtube.com", "music.youtube.com"
+        ):
+            if parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [""])[0]
+            else:
+                partes = parsed.path.strip("/").split("/")
+                if len(partes) >= 2 and partes[0] in (
+                    "live", "shorts", "embed"
+                ):
+                    video_id = partes[1]
+
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+            return jsonify({"erro": "Link inválido do YouTube."}), 400
+
+    except Exception:
+        return jsonify({"erro": "Não foi possível interpretar o link."}), 400
+
+    pasta = tempfile.mkdtemp(prefix="short_teste_")
+
+    try:
+        # Limita a tentativa de download e não publica nada.
+        import yt_dlp
+
+        arquivo_base = os.path.join(pasta, "video")
+        opcoes = {
+            "format": "best[height<=720][ext=mp4]/best[height<=720]/best",
+            "outtmpl": arquivo_base + ".%(ext)s",
+            "noplaylist": True,
+            "socket_timeout": 20,
+            "retries": 1,
+            "max_filesize": 300 * 1024 * 1024,
+            "quiet": True,
+            "no_warnings": True,
+        }
+
+        with yt_dlp.YoutubeDL(opcoes) as ydl:
+            ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+
+        arquivos = [
+            os.path.join(pasta, nome)
+            for nome in os.listdir(pasta)
+            if nome.startswith("video") and os.path.isfile(
+                os.path.join(pasta, nome)
+            )
+        ]
+        if not arquivos:
+            return jsonify({"erro": "O download não gerou um arquivo."}), 502
+
+        origem = arquivos[0]
+        ffmpeg = shutil.which("ffmpeg")
+        if not ffmpeg:
+            try:
+                import imageio_ffmpeg
+                ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+            except Exception:
+                return jsonify({"erro": "FFmpeg não está disponível."}), 503
+
+        # Extrai os primeiros 15 segundos para transcrição.
+        audio = os.path.join(pasta, "audio.wav")
+        subprocess.run(
+            [
+                ffmpeg, "-y", "-i", origem, "-t", "15",
+                "-vn", "-ac", "1", "-ar", "16000", audio
+            ],
+            check=True, capture_output=True, timeout=90
+        )
+
+        from faster_whisper import WhisperModel
+        modelo = WhisperModel("tiny", device="cpu", compute_type="int8")
+        segmentos, _ = modelo.transcribe(audio, language="pt")
+        transcricao = " ".join(
+            segmento.text.strip() for segmento in segmentos
+        ).strip()
+
+        # Gera um corte inicial de até 15 segundos.
+        saida = os.path.join(pasta, "short_15s.mp4")
+        subprocess.run(
+            [
+                ffmpeg, "-y", "-i", origem, "-t", "15",
+                "-vf",
+                "scale=720:1280:force_original_aspect_ratio=increase,"
+                "crop=720:1280",
+                "-c:v", "libx264", "-preset", "ultrafast",
+                "-crf", "27", "-c:a", "aac", "-b:a", "128k",
+                "-movflags", "+faststart", saida
+            ],
+            check=True, capture_output=True, timeout=120
+        )
+
+        # Armazena o resultado no diretório temporário do servidor.
+        # O link expira quando o ambiente temporário é removido.
+        from flask import send_file
+        return send_file(
+            saida,
+            mimetype="video/mp4",
+            as_attachment=True,
+            download_name=f"short_{video_id}_15s.mp4"
+        )
+
+    except subprocess.TimeoutExpired:
+        app.logger.warning("Tempo limite excedido ao gerar Short.")
+        return jsonify({
+            "erro": "O processamento excedeu o tempo limite."
+        }), 504
+    except Exception:
+        app.logger.exception("Falha ao gerar Short de teste.")
+        return jsonify({
+            "erro": (
+                "Não foi possível gerar o Short. Verifique os logs "
+                "do Render para identificar a etapa que falhou."
+            )
+        }), 502
+    finally:
+        # O arquivo é temporário; o envio precisa terminar antes da limpeza.
+        # Nesta versão, a limpeza imediata será evitada para permitir
+        # que o arquivo seja servido pela resposta.
+        pass
+
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
