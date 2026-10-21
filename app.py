@@ -904,6 +904,50 @@ def preparar_shorts():
     }), 200
 
 
+
+@app.route("/api/shorts/testar-geracao", methods=["POST"])
+def testar_geracao_short():
+    import json
+
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
+
+    if not url:
+        return jsonify({"erro": "Informe o link do seu vídeo."}), 400
+
+    try:
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+
+        hosts_validos = {
+            "youtube.com",
+            "www.youtube.com",
+            "m.youtube.com",
+            "youtu.be",
+            "www.youtu.be",
+        }
+
+        if host not in hosts_validos:
+            return jsonify({"erro": "Informe um link válido do YouTube."}), 400
+
+        return jsonify({
+            "status": "teste_preparado",
+            "url": url,
+            "duracao_maxima_segundos": 15,
+            "formato": "9:16",
+            "publicado": False,
+            "geracao_iniciada": False,
+            "mensagem": (
+                "A rota de teste foi criada, mas o processamento "
+                "ainda não foi iniciado."
+            ),
+        }), 200
+
+    except Exception:
+        app.logger.exception("Falha ao preparar teste de Short")
+        return jsonify({"erro": "Não foi possível preparar o teste."}), 500
 def verificar_ferramentas_cortes():
     import shutil
 
