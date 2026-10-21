@@ -601,7 +601,40 @@ def verificar_live():
         return jsonify({
             "erro": "Não foi possível validar o link."
         }), 500
+@app.route("/api/live/acessar", methods=["POST"])
+def acessar_live():
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
 
+    if not url:
+        return jsonify({"erro": "Informe o link da live."}), 400
+
+    try:
+        import yt_dlp
+
+        opcoes = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "extract_flat": False,
+            "socket_timeout": 15,
+        }
+
+        with yt_dlp.YoutubeDL(opcoes) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        return jsonify({
+            "status": "acesso_confirmado",
+            "titulo": info.get("title"),
+            "duracao_segundos": info.get("duration"),
+            "mensagem": "O servidor conseguiu ler os metadados do vídeo."
+        }), 200
+
+    except Exception:
+        app.logger.exception("Falha ao acessar vídeo do YouTube")
+        return jsonify({
+            "erro": "O servidor não conseguiu acessar os metadados do vídeo."
+        }), 502
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
