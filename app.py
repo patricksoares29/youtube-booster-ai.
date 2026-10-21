@@ -828,10 +828,11 @@ def preparar_shorts():
         )
     }), 200
 
+
 @app.route("/api/publicacao/enviar", methods=["POST"])
 def enviar_video_youtube():
-    import tempfile
     import os
+    import tempfile
     import requests
 
     connection_id = session.get("connection_id")
@@ -847,95 +848,121 @@ def enviar_video_youtube():
     privacidade = request.form.get("privacidade", "private").strip()
     arquivo = request.files.get("video")
 
-    if not titulo or not arquivo:
+    if not titulo or not arquivo or not arquivo.filename:
         return jsonify({
-            "erro": "Informe o título e selecione um arquivo de vídeo."
+            "erro": "Informe o título e selecione um vídeo."
         }), 400
 
     if privacidade not in ("private", "unlisted", "public"):
-        return jsonify({
-            "erro": "Privacidade inválida."
-        }), 400
+        return jsonify({"erro": "Privacidade inválida."}), 400
 
-    nome = (arquivo.filename or "").lower()
-    if not nome.endswith((".mp4", ".mov", ".avi", ".mpeg", ".webm")):
+    if not arquivo.filename.lower().endswith(".mp4"):
         return jsonify({
-            "erro": "Formato não reconhecido. Prefira um arquivo MP4."
+            "erro": "Por enquanto, envie vídeos no formato MP4."
         }), 400
 
     temporario = None
 
     try:
-        with tempfile.NamedTemporaryFile(delete=False) as temp:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".mp4"
+        ) as temp:
             temporario = temp.name
             arquivo.save(temporario)
 
+        tamanho = os.path.getsize(temporario)
+
+        if tamanho == 0:
+            return jsonify({"erro": "O arquivo está vazio."}), 400
+
         with open(temporario, "rb") as video:
-            resposta = requests.post(
+            inicio = requests.post(
                 "https://www.googleapis.com/upload/youtube/v3/videos",
                 params={
-                    "uploadType": "multipart",
+                    "uploadType": "resumable",
                     "part": "snippet,status"
                 },
                 headers={
                     "Authorization": (
                         f"Bearer {tokens['access_token']}"
-                    )
-                },
-                files={
-                    "media": (
-                        os.path.basename(nome),
-                        video,
-                        "video/mp4"
-                    )
-                },
-                data={
-                    "snippet": (
-                        '{"title": "'
-                        + titulo.replace('"', '\\"')
-                        + '", "description": "'
-                        + descricao.replace('"', '\\"')
-                        + '"}'
                     ),
-                    "status": (
-                        '{"privacyStatus": "' + privacidade + '"}'
-                    )
+                    "Content-Type": "application/json; charset=UTF-8",
+                    "X-Upload-Content-Type": "video/mp4",
+                    "X-Upload-Content-Length": str(tamanho)
                 },
-                timeout=300
+                json={
+                    "snippet": {
+                        "title": titulo,
+                        "description": descricao
+                    },
+                    "status": {
+                        "privacyStatus": privacidade
+                    }
+                },
+                timeout=30
             )
 
-        if not resposta.ok:
+            if not inicio.ok or not inicio.headers.get("Location"):
+                app.logger.error(
+                    "Falha ao iniciar upload: HTTP %s",
+                    inicio.status_code
+                )
+                return jsonify({
+                    "erro": "Não foi possível iniciar o envio ao YouTube.",
+                    "detalhe": inicio.text[:300]
+                }), 502
+
+            envio = requests.put(
+                inicio.headers["Location"],
+                data=video,
+                headers={
+                    "Content-Type": "video/mp4",
+                    "Content-Length": str(tamanho)
+                },
+                timeout=(30, 600)
+            )
+
+        if not envio.ok:
             app.logger.error(
-                "Upload YouTube falhou: HTTP %s",
-                resposta.status_code
+                "Falha no upload: HTTP %s", envio.status_code
             )
             return jsonify({
-                "erro": "O YouTube recusou o envio.",
-                "detalhe": resposta.text[:500]
+                "erro": "O YouTube não concluiu o envio.",
+                "detalhe": envio.text[:300]
             }), 502
 
-        resultado = resposta.json()
+        resultado = envio.json()
+        video_id = resultado.get("id")
+
+        if not video_id:
+            return jsonify({
+                "erro": "O YouTube não retornou o ID do vídeo."
+            }), 502
 
         return jsonify({
             "status": "enviado",
-            "video_id": resultado.get("id"),
-            "url": (
-                "https://www.youtube.com/watch?v="
-                + resultado.get("id", "")
-            ),
+            "video_id": video_id,
+            "url": f"https://www.youtube.com/watch?v={video_id}",
             "privacidade": privacidade,
             "mensagem": "O YouTube recebeu o vídeo."
         }), 201
 
     except requests.RequestException:
-        app.logger.exception("Falha durante o envio do vídeo")
+        app.logger.exception("Erro de comunicação no upload")
         return jsonify({
             "erro": "Falha de comunicação durante o envio."
         }), 502
 
+    except Exception:
+        app.logger.exception("Erro inesperado no upload")
+        return jsonify({
+            "erro": "Ocorreu um erro inesperado durante o envio."
+        }), 500
+
     finally:
         if temporario and os.path.exists(temporario):
             os.remove(temporario)
+
 if __name__ == "__main__":
     if not app.secret_key:
         raise RuntimeError(
