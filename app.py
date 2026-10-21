@@ -633,13 +633,13 @@ def acessar_live():
 
        
 if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
-    app.logger.warning(
-        "ID de vídeo inválido extraído do link: %r",
-        video_id
-    )
-    return jsonify({
-        "erro": "Link inválido. Confira se o endereço é do YouTube."
-    }), 400
+            app.logger.warning(
+                "ID de vídeo inválido extraído do link: %r",
+                video_id
+            )
+            return jsonify({
+                "erro": "Link inválido. Confira se o endereço é do YouTube."
+            }), 400
 
 
         # Reutiliza a sessão autenticada do painel.
