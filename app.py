@@ -632,7 +632,7 @@ def acessar_live():
                     video_id = partes[1]
 
        
-if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
             app.logger.warning(
                 "ID de vídeo inválido extraído do link: %r",
                 video_id
