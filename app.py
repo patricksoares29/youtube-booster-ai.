@@ -567,24 +567,24 @@ def verificar_live():
         }), 400
 
     try:
-        parsed = urlparse(url)
-        host = (parsed.hostname or "").lower()
-        video_id = ""
-
-        if host in ("youtube.com", "www.youtube.com", "m.youtube.com"):
-            if parsed.path == "/watch":
-                video_id = parse_qs(parsed.query).get("v", [""])[0]
-            elif parsed.path.startswith("/live/") or parsed.path.startswith("/shorts/"):
-                video_id = parsed.path.split("/")[2]
-        elif host == "youtu.be":
-            video_id = parsed.path.strip("/").split("/")[0]
-
-        if not video_id or not all(
-            char.isalnum() or char in "_-" for char in video_id
-        ):
-            return jsonify({
-                "erro": "Link inválido. Envie um link de vídeo ou live do YouTube."
-            }), 400
+            parsed = urlparse(url)
+            host = (parsed.hostname or "").lower()
+            video_id = ""
+    
+            if host in ("youtube.com", "www.youtube.com", "m.youtube.com"):
+                if parsed.path == "/watch":
+                    video_id = parse_qs(parsed.query).get("v", [""])[0]
+                elif parsed.path.startswith("/live/") or parsed.path.startswith("/shorts/"):
+                    video_id = parsed.path.split("/")[2]
+            elif host == "youtu.be":
+                video_id = parsed.path.strip("/").split("/")[0]
+    
+            if not video_id or not all(
+                char.isalnum() or char in "_-" for char in video_id
+            ):
+                return jsonify({
+                    "erro": "Link inválido. Envie um link de vídeo ou live do YouTube."
+                }), 400
 
         return jsonify({
             "status": "link_validado",
@@ -616,7 +616,7 @@ def acessar_live():
 
     try:
         parsed = urlparse(url)
-        host = parsed.netloc.lower().split(":")[0]
+       host = (parsed.hostname or "").lower()
         video_id = ""
 
         if host == "youtu.be" or host.endswith(".youtu.be"):
