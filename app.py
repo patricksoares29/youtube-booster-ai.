@@ -1266,7 +1266,7 @@ def processar_upload_short():
         segmentos, _ = modelo.transcribe(
             audio_array,
             language="pt",
-           
+            vad_filter=False
         )
         transcricao = " ".join(
             s.text.strip() for s in segmentos
