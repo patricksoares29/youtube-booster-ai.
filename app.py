@@ -1121,12 +1121,28 @@ def gerar_teste_short():
         return jsonify({
             "erro": "O processamento excedeu o tempo limite."
         }), 504
-    except Exception:
+       except Exception as erro:
         app.logger.exception("Falha ao gerar Short de teste.")
+
+        mensagem = str(erro).lower()
+
+        if (
+            "not a bot" in mensagem
+            or "sign in to confirm" in mensagem
+            or "confirm you're not a bot" in mensagem
+        ):
+            return jsonify({
+                "erro": (
+                    "O YouTube bloqueou o download automático "
+                    "e exige verificação. Envie o arquivo MP4 "
+                    "do vídeo que você tem autorização para usar."
+                )
+            }), 502
+
         return jsonify({
             "erro": (
-                "Não foi possível gerar o Short. Verifique os logs "
-                "do Render para identificar a etapa que falhou."
+                "Não foi possível gerar o Short. "
+                "Consulte os logs do Render."
             )
         }), 502
     finally:
