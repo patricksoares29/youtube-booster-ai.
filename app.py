@@ -1272,21 +1272,62 @@ def processar_upload_short():
             s.text.strip() for s in segmentos
         ).strip()
 
-        # Renderiza o primeiro corte vertical.
-        subprocess.run(
-            [
-                ffmpeg, "-y", "-i", origem, "-t", "15",
-                "-vf",
-                "scale=720:1280:force_original_aspect_ratio=increase,"
-                "crop=720:1280",
-                "-c:v", "libx264", "-preset", "ultrafast",
-                "-crf", "27", "-c:a", "aac", "-b:a", "128k",
-                "-movflags", "+faststart", saida
-            ],
-            check=True,
+        # Renderiza o primeiro corte vertical e valida a duração.
+        comando = [
+            ffmpeg, "-y",
+            "-i", origem,
+            "-t", "15",
+            "-vf",
+            "scale=720:1280:force_original_aspect_ratio=increase,"
+            "crop=720:1280",
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "27",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-movflags", "+faststart",
+            saida
+        ]
+
+        resultado = subprocess.run(
+            comando,
             capture_output=True,
+            text=True,
             timeout=180
         )
+
+        if resultado.returncode != 0:
+            app.logger.error(
+                "FFmpeg falhou: %s",
+                resultado.stderr[-3000:]
+            )
+            raise RuntimeError("Falha ao gerar o vídeo.")
+
+        if not os.path.exists(saida) or os.path.getsize(saida) == 0:
+            raise RuntimeError("O FFmpeg não gerou um arquivo válido.")
+
+        # Confere se o vídeo gerado tem duração suficiente.
+        ffprobe = shutil.which("ffprobe")
+        if ffprobe:
+            verificacao = subprocess.run(
+                [
+                    ffprobe, "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    saida
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            if verificacao.returncode == 0:
+                duracao = float(verificacao.stdout.strip() or 0)
+
+                if duracao < 10:
+                    raise RuntimeError(
+                        f"Vídeo muito curto: {duracao:.2f} segundos."
+                    )
 
         resposta = send_file(
             saida,
