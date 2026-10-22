@@ -1116,7 +1116,7 @@ def gerar_teste_short():
             download_name=f"short_{video_id}_15s.mp4"
         )
 
-       except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired:
         app.logger.warning("Tempo limite excedido ao gerar Short.")
         return jsonify({
             "erro": "O processamento excedeu o tempo limite."
