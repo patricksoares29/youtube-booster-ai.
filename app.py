@@ -1116,12 +1116,13 @@ def gerar_teste_short():
             download_name=f"short_{video_id}_15s.mp4"
         )
 
-    except subprocess.TimeoutExpired:
+       except subprocess.TimeoutExpired:
         app.logger.warning("Tempo limite excedido ao gerar Short.")
         return jsonify({
             "erro": "O processamento excedeu o tempo limite."
         }), 504
-       except Exception as erro:
+
+    except Exception as erro:
         app.logger.exception("Falha ao gerar Short de teste.")
 
         mensagem = str(erro).lower()
@@ -1133,9 +1134,9 @@ def gerar_teste_short():
         ):
             return jsonify({
                 "erro": (
-                    "O YouTube bloqueou o download automático "
-                    "e exige verificação. Envie o arquivo MP4 "
-                    "do vídeo que você tem autorização para usar."
+                    "O YouTube exige verificação para esse download. "
+                    "Envie um arquivo MP4 que você tenha autorização "
+                    "para usar."
                 )
             }), 502
 
@@ -1145,11 +1146,9 @@ def gerar_teste_short():
                 "Consulte os logs do Render."
             )
         }), 502
+
     finally:
-        # O arquivo é temporário; o envio precisa terminar antes da limpeza.
-        # Nesta versão, a limpeza imediata será evitada para permitir
-        # que o arquivo seja servido pela resposta.
-        pass
+        shutil.rmtree(pasta, ignore_errors=True)
 @app.route("/api/shorts/enviar-video", methods=["POST"])
 def enviar_video_short():
     import os
