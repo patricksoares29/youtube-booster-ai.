@@ -1005,6 +1005,7 @@ def gerar_teste_short():
 
     data = request.get_json(silent=True) or {}
     url = str(data.get("url", "")).strip()
+    duracao = int(data.get("duracao", 60))
 
     if not url:
         return jsonify({"erro": "Informe o link do vídeo."}), 400
@@ -1080,7 +1081,7 @@ def gerar_teste_short():
         audio = os.path.join(pasta, "audio.wav")
         subprocess.run(
             [
-                ffmpeg, "-y", "-i", origem, "-t", "15",
+                ffmpeg, "-y", "-i", origem,  str(duracao),
                 "-vn", "-ac", "1", "-ar", "16000", audio
             ],
             check=True, capture_output=True, timeout=90
@@ -1097,7 +1098,7 @@ def gerar_teste_short():
         saida = os.path.join(pasta, "short_15s.mp4")
         subprocess.run(
             [
-                ffmpeg, "-y", "-i", origem, "-t", "15",
+                ffmpeg, "-y", "-i", origem,  str(duracao),
                 "-vf",
                 "scale=720:1280:force_original_aspect_ratio=increase,"
                 "crop=720:1280",
