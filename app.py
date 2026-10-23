@@ -1184,7 +1184,7 @@ def enviar_video_short():
         os.remove(caminho)
         os.rmdir(pasta)
         return jsonify({
-            "erro": "Arquivo vazio ou maior que 500 MB."
+            "erro": "Arquivo vazio ou maior que 700 MB."
         }), 400
 
     return jsonify({
