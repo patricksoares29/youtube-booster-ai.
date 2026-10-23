@@ -1307,41 +1307,47 @@ def processar_upload_short():
         if not os.path.exists(saida) or os.path.getsize(saida) == 0:
             raise RuntimeError("O FFmpeg não gerou um arquivo válido.")
 
+
         # Confere se o vídeo gerado tem duração suficiente.
         ffprobe = shutil.which("ffprobe")
-        if ffprobe:
-            verificacao = subprocess.run(
-                [
-                    ffprobe, "-v", "error",
-                    "-show_entries", "format=duration",
-                    "-of", "default=noprint_wrappers=1:nokey=1",
-                    saida
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30
+        if not ffprobe:
+            raise RuntimeError(
+                "FFprobe não está disponível para verificar a duração."
             )
 
-if verificacao.returncode != 0:
-    app.logger.error(
-        "FFprobe falhou: %s",
-        verificacao.stderr[-2000:]
-    )
-    raise RuntimeError(
-        "Não foi possível verificar a duração do vídeo."
-    )
+        verificacao = subprocess.run(
+            [
+                ffprobe, "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                saida
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
 
-try:
-    duracao = float(verificacao.stdout.strip())
-except (ValueError, TypeError):
-    raise RuntimeError(
-        "A duração do vídeo retornou um valor inválido."
-    )
+        if verificacao.returncode != 0:
+            app.logger.error(
+                "FFprobe falhou: %s",
+                verificacao.stderr[-2000:]
+            )
+            raise RuntimeError(
+                "Não foi possível verificar a duração do vídeo."
+            )
 
-if duracao < 10:
-    raise RuntimeError(
-        f"Vídeo muito curto: {duracao:.2f} segundos."
-    )
+        try:
+            duracao = float(verificacao.stdout.strip())
+        except (ValueError, TypeError):
+            raise RuntimeError(
+                "A duração do vídeo retornou um valor inválido."
+            )
+
+        if duracao < 10:
+            raise RuntimeError(
+                f"Vídeo muito curto: {duracao:.2f} segundos."
+            )
+
 
         resposta = send_file(
             saida,
