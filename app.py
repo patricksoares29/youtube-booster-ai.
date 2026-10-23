@@ -1198,25 +1198,21 @@ def enviar_video_short():
     }), 201
 @app.route("/api/shorts/processar-upload", methods=["POST"])
 def processar_upload_short():
-    import os
-    import shutil
+    import re
     import tempfile
     import subprocess
-    import re
+    import shutil
+    import os
     from flask import request, jsonify, send_file
 
     arquivo = request.files.get("video")
-
     if not arquivo or not arquivo.filename:
-        return jsonify({"erro": "Selecione um arquivo MP4."}), 400
-
-    if not arquivo.filename.lower().endswith(".mp4"):
-        return jsonify({"erro": "Envie um arquivo MP4."}), 400
+        return jsonify({"erro": "Envie um arquivo de vídeo no campo 'video'."}), 400
 
     pasta = tempfile.mkdtemp(prefix="short_processar_")
     origem = os.path.join(pasta, "origem.mp4")
-    audio = os.path.join(pasta, "audio.wav")
-    saida = os.path.join(pasta, "short_15s.mp4")
+    lista_cortes = os.path.join(pasta, "cortes.txt")
+    saida = os.path.join(pasta, "short_automatico.mp4")
 
     try:
         arquivo.save(origem)
@@ -1226,158 +1222,128 @@ def processar_upload_short():
 
         ffmpeg = shutil.which("ffmpeg")
         if not ffmpeg:
-            try:
-                import imageio_ffmpeg
-                ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-            except Exception:
-                return jsonify({"erro": "FFmpeg não está disponível."}), 503
+            return jsonify({"erro": "FFmpeg não está disponível."}), 503
 
-        # Extrai áudio para a transcrição.
-        subprocess.run(
-            [
-                ffmpeg, "-y", "-i", origem, "-t", "15",
-                "-vn", "-ac", "1", "-ar", "16000", audio
-            ],
-            check=True,
-            capture_output=True,
-            timeout=90
-        )
-
-        # Transcreve o áudio em português.
-        import numpy as np
-        import wave
-        from faster_whisper import WhisperModel
-
-        with wave.open(audio, "rb") as wav:
-            taxa = wav.getframerate()
-            canais = wav.getnchannels()
-            amostras = wav.readframes(wav.getnframes())
-
-        audio_array = np.frombuffer(amostras, dtype=np.int16)
-        audio_array = audio_array.astype(np.float32) / 32768.0
-
-        if canais > 1:
-            audio_array = audio_array.reshape(-1, canais).mean(axis=1)
-
-        modelo = WhisperModel(
-            "tiny",
-            device="cpu",
-            compute_type="int8"
-        )
-
-        segmentos, _ = modelo.transcribe(
-            audio_array,
-            language="pt",
-            vad_filter=False
-        )
-        transcricao = " ".join(
-            s.text.strip() for s in segmentos
-        ).strip()
-
-        # Renderiza o primeiro corte vertical e valida a duração.
-        comando = [
-            ffmpeg, "-y",
-            "-i", origem,
-            "-t", "15",
-            "-vf",
-            "scale=720:1280:force_original_aspect_ratio=increase,"
-            "crop=720:1280",
-            "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-crf", "27",
-            "-c:a", "aac",
-            "-b:a", "128k",
-            "-movflags", "+faststart",
-            saida
-        ]
-
-        resultado = subprocess.run(
-            comando,
-            capture_output=True,
-            text=True,
-            timeout=180
-        )
-
-        if resultado.returncode != 0:
-            app.logger.error(
-                "FFmpeg falhou: %s",
-                resultado.stderr[-3000:]
-            )
-            raise RuntimeError("Falha ao gerar o vídeo.")
-
-        if not os.path.exists(saida) or os.path.getsize(saida) == 0:
-            raise RuntimeError("O FFmpeg não gerou um arquivo válido.")
-
-
-        # Confere se o vídeo gerado tem duração suficiente.
         ffprobe = shutil.which("ffprobe")
         if not ffprobe:
-            raise RuntimeError(
-                "FFprobe não está disponível para verificar a duração."
-            )
+            return jsonify({"erro": "FFprobe não está disponível."}), 503
 
-        verificacao = subprocess.run(
+        # Obtém a duração do vídeo.
+        info = subprocess.run(
             [
                 ffprobe, "-v", "error",
                 "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1",
-                saida
+                origem
             ],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
+            check=True
         )
 
-        if verificacao.returncode != 0:
-            app.logger.error(
-                "FFprobe falhou: %s",
-                verificacao.stderr[-2000:]
-            )
-            raise RuntimeError(
-                "Não foi possível verificar a duração do vídeo."
+        duracao_total = float(info.stdout.strip())
+        if duracao_total < 10:
+            return jsonify({"erro": "O vídeo precisa ter pelo menos 10 segundos."}), 400
+
+        # Detecta mudanças de cena e registra os tempos encontrados.
+        deteccao = subprocess.run(
+            [
+                ffmpeg, "-hide_banner", "-i", origem,
+                "-vf", "select='gt(scene,0.30)',showinfo",
+                "-an", "-f", "null", "-"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=240
+        )
+
+        tempos = [0.0]
+        for linha in deteccao.stderr.splitlines():
+            if "pts_time:" in linha:
+                achado = re.search(r"pts_time:([0-9.]+)", linha)
+                if achado:
+                    tempo = float(achado.group(1))
+                    if 0 < tempo < duracao_total:
+                        tempos.append(tempo)
+
+        tempos = sorted(set(tempos))
+
+        # Cria candidatos com duração de 15 segundos próximos às mudanças.
+        candidatos = []
+        for tempo in tempos:
+            inicio = max(0.0, min(tempo, duracao_total - 15.0))
+            if all(abs(inicio - existente) >= 8 for existente in candidatos):
+                candidatos.append(inicio)
+
+        # Limita a quantidade para não sobrecarregar o servidor.
+        candidatos = candidatos[:5]
+        if not candidatos:
+            candidatos = [0.0]
+
+        # Monta um vídeo com os candidatos encontrados.
+        entradas = []
+        filtros = []
+        for indice, inicio in enumerate(candidatos):
+            entradas.extend(["-ss", f"{inicio:.2f}", "-i", origem])
+            filtros.append(
+                f"[{indice}:v]scale=720:1280:"
+                "force_original_aspect_ratio=increase,"
+                f"crop=720:1280,setsar=1,setpts=PTS-STARTPTS[v{indice}]"
             )
 
-        try:
-            duracao = float(verificacao.stdout.strip())
-        except (ValueError, TypeError):
-            raise RuntimeError(
-                "A duração do vídeo retornou um valor inválido."
-            )
+        # Junta os segmentos em um único arquivo vertical.
+        filtros.append(
+            "".join(f"[v{i}]" for i in range(len(candidatos)))
+            + f"concat=n={len(candidatos)}:v=1:a=0[outv]"
+        )
 
-        if duracao < 10:
-            raise RuntimeError(
-                f"Vídeo muito curto: {duracao:.2f} segundos."
-            )
+        comando = [
+            ffmpeg, "-y", *entradas,
+            "-filter_complex", ";".join(filtros),
+            "-map", "[outv]",
+            "-an",
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "30",
+            "-t", "60",
+            "-movflags", "+faststart",
+            saida
+        ]
 
+        subprocess.run(
+            comando,
+            capture_output=True,
+            text=True,
+            timeout=240,
+            check=True
+        )
+
+        if not os.path.exists(saida) or os.path.getsize(saida) == 0:
+            raise RuntimeError("O FFmpeg não gerou um vídeo válido.")
 
         resposta = send_file(
             saida,
             mimetype="video/mp4",
             as_attachment=True,
-            download_name="short_15s.mp4"
+            download_name="short_automatico.mp4"
         )
-
-        # Mantém a pasta até o término do envio da resposta.
         resposta.call_on_close(
             lambda: shutil.rmtree(pasta, ignore_errors=True)
-        )
-
-        resposta.headers["X-Transcricao"] = (
-            transcricao[:500] if transcricao else "Sem fala detectada"
         )
         return resposta
 
     except subprocess.TimeoutExpired:
         shutil.rmtree(pasta, ignore_errors=True)
         return jsonify({
-            "erro": "O processamento excedeu o tempo limite."
+            "erro": "A análise demorou demais para o servidor gratuito."
         }), 504
 
     except Exception:
-        app.logger.exception("Falha ao processar o MP4 enviado.")
+        app.logger.exception("Falha ao detectar cenas e gerar o Short.")
         shutil.rmtree(pasta, ignore_errors=True)
         return jsonify({
-            "erro": "Não foi possível processar o MP4. Consulte os logs do Render."
+            "erro": "Não foi possível gerar o vídeo. Consulte os logs do Render."
         }), 500
 @app.route("/api/diagnostico-rotas", methods=["GET"])
 def diagnostico_rotas():
