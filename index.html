@@ -275,7 +275,7 @@ a{color:#8cb5ff}
       <label for="arquivo-live-cortes">Arquivo MP4 da live</label>
       <input
         id="arquivo-live-cortes"
-        name="arquivo"
+        name="video"
         type="file"
         accept=".mp4,video/mp4"
         required
@@ -1394,65 +1394,66 @@ document.getElementById("form-publicar-youtube").addEventListener("submit", asyn
 </script>
   
 <script>
+
 document.getElementById("form-cortes-ia").addEventListener("submit", async function(evento) {
   evento.preventDefault();
 
-  const campo = document.getElementById("link-live-cortes");
-  const duracao = document.getElementById("duracao-corte").value;
+  const arquivo = document.getElementById("arquivo-live-cortes");
   const status = document.getElementById("status-cortes-ia");
   const botao = this.querySelector('button[type="submit"]');
-
-  const url = campo.value.trim();
   const base = "https://youtube-booster-ai.onrender.com";
 
+  if (!arquivo.files || !arquivo.files[0]) {
+    status.textContent = "Selecione o arquivo MP4 da sua live.";
+    return;
+  }
+
+  const dados = new FormData();
+  dados.append("video", arquivo.files[0]);
+
   botao.disabled = true;
-  status.textContent = "Validando o link da live no servidor...";
+  status.textContent = "Enviando o vídeo e preparando os cortes...";
 
   try {
-     const resposta = await fetch(base + "/api/shorts/gerar-teste", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "video/mp4, application/json"
-  },
-  body: JSON.stringify({
-    url: url,
-    duracao: Number(duracao),
-    quantidade: 10
-  })
-});
+    const resposta = await fetch(base + "/api/shorts/processar-upload", {
+      method: "POST",
+      body: dados
+    });
 
     if (!resposta.ok) {
-  const dados = await resposta.json();
-  throw new Error(dados.erro || "Falha ao gerar o Short.");
-}
+      let mensagem = "Falha ao gerar o Short.";
+      try {
+        const erro = await resposta.json();
+        mensagem = erro.erro || mensagem;
+      } catch (_) {}
+      throw new Error(mensagem);
+    }
 
-const video = await resposta.blob();
+    const video = await resposta.blob();
 
-if (!video.type.includes("video/mp4")) {
-  throw new Error("O servidor não retornou um arquivo MP4.");
-}
+    if (!video.type.includes("video/mp4")) {
+      throw new Error("O servidor não retornou um arquivo MP4.");
+    }
 
-const linkDownload = document.createElement("a");
-const urlVideo = URL.createObjectURL(video);
+    const urlVideo = URL.createObjectURL(video);
+    const linkDownload = document.createElement("a");
+    linkDownload.href = urlVideo;
+    linkDownload.download = "short_automatico.mp4";
+    document.body.appendChild(linkDownload);
+    linkDownload.click();
+    linkDownload.remove();
 
-linkDownload.href = urlVideo;
-linkDownload.download = "short_automatico.mp4";
-document.body.appendChild(linkDownload);
-linkDownload.click();
-linkDownload.remove();
+    setTimeout(() => URL.revokeObjectURL(urlVideo), 1000);
 
-URL.revokeObjectURL(urlVideo);
-
-status.textContent = "Short gerado! O download do MP4 foi iniciado.";
+    status.textContent = "Short gerado! O download do MP4 foi iniciado.";
 
   } catch (erro) {
-    status.textContent =
-      "Não foi possível validar o pedido: " + erro.message;
+    status.textContent = "Erro ao processar o vídeo: " + erro.message;
   } finally {
     botao.disabled = false;
   }
 });
+
 </script>
 
 </body>
