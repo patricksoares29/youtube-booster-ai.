@@ -271,7 +271,15 @@ a{color:#8cb5ff}
         <option value="30" selected>Até 30 segundos</option>
         <option value="60">Até 60 segundos</option>
       </select>
-
+      
+      <label for="arquivo-live-cortes">Arquivo MP4 da live</label>
+      <input
+        id="arquivo-live-cortes"
+        name="arquivo"
+        type="file"
+        accept=".mp4,video/mp4"
+        required
+      >
       <button type="submit">🔎 Analisar live com IA</button>
       <p id="status-cortes-ia" role="status" aria-live="polite"></p>
     </form>
