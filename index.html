@@ -1401,30 +1401,42 @@ document.getElementById("form-cortes-ia").addEventListener("submit", async funct
   status.textContent = "Validando o link da live no servidor...";
 
   try {
-    const resposta = await fetch(base + "/api/shorts/preparar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        url: url,
-        duracao: Number(duracao),
-        quantidade: 10
-      })
-    });
-
-    const dados = await resposta.json();
+     const resposta = await fetch(base + "/api/shorts/gerar-teste", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "video/mp4, application/json"
+  },
+  body: JSON.stringify({
+    url: url,
+    duracao: Number(duracao),
+    quantidade: 10
+  })
+});
 
     if (!resposta.ok) {
-      throw new Error(dados.erro || "Erro HTTP " + resposta.status);
-    }
+  const dados = await resposta.json();
+  throw new Error(dados.erro || "Falha ao gerar o Short.");
+}
 
-    status.textContent =
-      "Link validado! ID: " + dados.video_id +
-      ". Duração escolhida: até " + duracao +
-      " segundos. " +
-      (dados.mensagem || "Pedido recebido pelo servidor.");
+const video = await resposta.blob();
+
+if (!video.type.includes("video/mp4")) {
+  throw new Error("O servidor não retornou um arquivo MP4.");
+}
+
+const linkDownload = document.createElement("a");
+const urlVideo = URL.createObjectURL(video);
+
+linkDownload.href = urlVideo;
+linkDownload.download = "short_automatico.mp4";
+document.body.appendChild(linkDownload);
+linkDownload.click();
+linkDownload.remove();
+
+URL.revokeObjectURL(urlVideo);
+
+status.textContent = "Short gerado! O download do MP4 foi iniciado.";
 
   } catch (erro) {
     status.textContent =
