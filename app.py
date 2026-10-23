@@ -973,6 +973,7 @@ def verificar_ferramentas_cortes():
     return {
         "yt_dlp": shutil.which("yt-dlp") is not None,
         "ffmpeg": shutil.which("ffmpeg") is not None,
+        "ffprobe": shutil.which("ffprobe") is not None,
         "transcricao": transcricao_disponivel,
     }
 
