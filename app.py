@@ -1168,7 +1168,7 @@ def enviar_video_short():
             "erro": "Envie um arquivo com extensão MP4."
         }), 400
 
-    limite = 500 * 1024 * 1024
+    limite = 700 * 1024 * 1024
 
     request.max_content_length = limite
 
