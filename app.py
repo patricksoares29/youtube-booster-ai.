@@ -1151,7 +1151,7 @@ def gerar_teste_short():
         }), 502
 
     finally:
-        shutil.rmtree(pasta, ignore_errors=True)
+        pass
 @app.route("/api/shorts/enviar-video", methods=["POST"])
 def enviar_video_short():
     import os
