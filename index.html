@@ -1485,16 +1485,8 @@ document.getElementById("form-cortes-ia").addEventListener("submit", async funct
   } finally {
     botao.disabled = false;
   }
-
-    status.textContent = "Tarefa iniciada: " + resultado.task_id +
-      ". A consulta de progresso será habilitada na próxima etapa.";
-
-  } catch (erro) {
-    status.textContent = "Erro: " + erro.message;
-  } finally {
-    botao.disabled = false;
-  }
 });
+
 </script>
 
 </body>
