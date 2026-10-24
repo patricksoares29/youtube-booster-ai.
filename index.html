@@ -1395,6 +1395,7 @@ document.getElementById("form-publicar-youtube").addEventListener("submit", asyn
   
 <script>
 
+
 document.getElementById("form-cortes-ia").addEventListener("submit", async function(evento) {
   evento.preventDefault();
 
@@ -1412,13 +1413,80 @@ document.getElementById("form-cortes-ia").addEventListener("submit", async funct
   dados.append("video", arquivo.files[0]);
 
   botao.disabled = true;
-  status.textContent = "Enviando o vídeo para iniciar o processamento...";
+  status.textContent = "Enviando o vídeo...";
 
   try {
     const resposta = await fetch(base + "/api/shorts/processar-upload", {
       method: "POST",
       body: dados
     });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(resultado.erro || "Não foi possível enviar o vídeo.");
+    }
+
+    if (!resultado.task_id) {
+      throw new Error("O servidor não retornou o identificador da tarefa.");
+    }
+
+    const taskId = resultado.task_id;
+    status.textContent = "Upload recebido. Aguardando processamento...";
+
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const consulta = await fetch(
+        base + "/api/shorts/status/" + encodeURIComponent(taskId)
+      );
+
+      const tarefa = await consulta.json();
+
+      if (!consulta.ok) {
+        throw new Error(tarefa.erro || "Não foi possível consultar o progresso.");
+      }
+
+      status.textContent =
+        (tarefa.mensagem || tarefa.status || "Processando...") +
+        (typeof tarefa.progresso === "number"
+          ? " (" + tarefa.progresso + "%)"
+          : "");
+
+      if (tarefa.status === "erro") {
+        throw new Error(tarefa.mensagem || "Falha ao gerar o Short.");
+      }
+
+      if (tarefa.status === "concluido") {
+        const download = tarefa.download_url;
+
+        if (!download) {
+          throw new Error("O servidor não informou o link do Short.");
+        }
+
+        status.textContent = "Short pronto! Abrindo o download...";
+
+        const link = document.createElement("a");
+        link.href = base + download;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.download = "short_automatico.mp4";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        status.textContent = "Processamento concluído. Se o download não abriu, verifique a nova aba.";
+        break;
+      }
+    }
+
+  } catch (erro) {
+    status.textContent = "Erro: " + erro.message;
+  } finally {
+    botao.disabled = false;
+  }
+});
+
 
     const resultado = await resposta.json();
 
