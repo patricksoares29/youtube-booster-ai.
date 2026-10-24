@@ -1466,25 +1466,26 @@ document.getElementById("form-cortes-ia").addEventListener("submit", async funct
 
         status.textContent = "Short pronto! Abrindo o download...";
 
+        status.replaceChildren();
+
+        const mensagem = document.createElement("p");
+        mensagem.textContent =
+          "✅ Short pronto! Clique abaixo para baixar:";
+        status.appendChild(mensagem);
+
         const link = document.createElement("a");
         link.href = new URL(download, base).href;
-        link.textContent = "⬇️ Baixar Short MP4";
-        link.download = "short_automatico.mp4";
+        link.textContent = "⬇️ BAIXAR SHORT MP4";
         link.style.display = "inline-block";
         link.style.marginTop = "12px";
-        link.style.padding = "12px";
+        link.style.padding = "14px 20px";
         link.style.color = "#ffffff";
-        link.style.background = "#c62828";
+        link.style.backgroundColor = "#c62828";
         link.style.borderRadius = "8px";
+        link.style.fontWeight = "bold";
+        link.style.textDecoration = "none";
 
-        status.appendChild(document.createElement("br"));
         status.appendChild(link);
-
-        status.textContent = "Short pronto! Clique no link abaixo para baixar.";
-        status.appendChild(document.createElement("br"));
-        status.appendChild(link);
-
-        status.textContent = "Short pronto! Use o link abaixo para baixar o vídeo.";
         break;
       }
     }
