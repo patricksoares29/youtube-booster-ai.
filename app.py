@@ -1248,16 +1248,22 @@ def processar_upload_short():
             return jsonify({"erro": "O vídeo precisa ter pelo menos 10 segundos."}), 400
 
         # Detecta mudanças de cena e registra os tempos encontrados.
+
         deteccao = subprocess.run(
             [
-                ffmpeg, "-hide_banner", "-i", origem,
-                "-vf", "select='gt(scene,0.30)',showinfo",
-                "-an", "-f", "null", "-"
+                ffmpeg,
+                "-hide_banner",
+                "-i", origem,
+                "-vf",
+                "fps=2,scale=640:-2,select='gt(scene,0.30)',showinfo",
+                "-an",
+                "-f", "null", "-"
             ],
             capture_output=True,
             text=True,
             timeout=240
         )
+
 
         tempos = [0.0]
         for linha in deteccao.stderr.splitlines():
