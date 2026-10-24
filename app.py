@@ -1197,161 +1197,243 @@ def enviar_video_short():
             "A análise e a geração do Short ainda não foram executadas."
         )
     }), 201
+
 @app.route("/api/shorts/processar-upload", methods=["POST"])
 def processar_upload_short():
-    import re
-    import tempfile
-    import subprocess
-    import shutil
     import os
-    from flask import request, jsonify, send_file
+    import tempfile
+    import threading
+    import uuid
+    import shutil
+    import subprocess
+    import re
+    from flask import request, jsonify
 
     arquivo = request.files.get("video")
-    if not arquivo or not arquivo.filename:
-        return jsonify({"erro": "Envie um arquivo de vídeo no campo 'video'."}), 400
 
+    if not arquivo or not arquivo.filename:
+        return jsonify({
+            "erro": "Selecione um arquivo MP4."
+        }), 400
+
+    task_id = uuid.uuid4().hex
     pasta = tempfile.mkdtemp(prefix="short_processar_")
     origem = os.path.join(pasta, "origem.mp4")
-    lista_cortes = os.path.join(pasta, "cortes.txt")
     saida = os.path.join(pasta, "short_automatico.mp4")
 
     try:
         arquivo.save(origem)
 
-        if os.path.getsize(origem) == 0:
-            return jsonify({"erro": "O arquivo está vazio."}), 400
+        if not os.path.exists(origem) or os.path.getsize(origem) == 0:
+            shutil.rmtree(pasta, ignore_errors=True)
+            return jsonify({"erro": "Arquivo vazio."}), 400
 
-        ffmpeg = shutil.which("ffmpeg")
-        if not ffmpeg:
-            return jsonify({"erro": "FFmpeg não está disponível."}), 503
+        with lock_tarefas_shorts:
+            tarefas_shorts[task_id] = {
+                "status": "aguardando",
+                "mensagem": "Upload recebido.",
+                "progresso": 0,
+                "pasta": pasta,
+                "saida": saida,
+            }
 
-        ffprobe = shutil.which("ffprobe")
-        if not ffprobe:
-            return jsonify({"erro": "FFprobe não está disponível."}), 503
+        def processar():
+            try:
+                with lock_tarefas_shorts:
+                    tarefas_shorts[task_id].update({
+                        "status": "processando",
+                        "mensagem": "Analisando o vídeo.",
+                        "progresso": 10,
+                    })
 
-        # Obtém a duração do vídeo.
-        info = subprocess.run(
-            [
-                ffprobe, "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                origem
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=True
-        )
+                ffmpeg = shutil.which("ffmpeg")
+                ffprobe = shutil.which("ffprobe")
 
-        duracao_total = float(info.stdout.strip())
-        if duracao_total < 10:
-            return jsonify({"erro": "O vídeo precisa ter pelo menos 10 segundos."}), 400
+                if not ffmpeg or not ffprobe:
+                    raise RuntimeError(
+                        "FFmpeg ou FFprobe não está disponível."
+                    )
 
-        # Detecta mudanças de cena e registra os tempos encontrados.
+                info = subprocess.run(
+                    [
+                        ffprobe, "-v", "error",
+                        "-show_entries", "format=duration",
+                        "-of", "default=noprint_wrappers=1:nokey=1",
+                        origem,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=True,
+                )
 
-        deteccao = subprocess.run(
-            [
-                ffmpeg,
-                "-hide_banner",
-                "-i", origem,
-                "-vf",
-                "fps=0.2,scale=320:-2,select='gt(scene,0.25)',showinfo",
-                "-an",
-                "-f", "null", "-"
-            ],
-            capture_output=True,
-            text=True,
-            timeout=600
-        )
+                duracao = float(info.stdout.strip())
 
+                if duracao < 10:
+                    raise RuntimeError(
+                        "O vídeo precisa ter pelo menos 10 segundos."
+                    )
 
-        tempos = [0.0]
-        for linha in deteccao.stderr.splitlines():
-            if "pts_time:" in linha:
-                achado = re.search(r"pts_time:([0-9.]+)", linha)
-                if achado:
-                    tempo = float(achado.group(1))
-                    if 0 < tempo < duracao_total:
-                        tempos.append(tempo)
+                with lock_tarefas_shorts:
+                    tarefas_shorts[task_id].update({
+                        "mensagem": "Detectando mudanças de cena.",
+                        "progresso": 25,
+                    })
 
-        tempos = sorted(set(tempos))
+                deteccao = subprocess.run(
+                    [
+                        ffmpeg, "-hide_banner", "-i", origem,
+                        "-vf",
+                        "fps=0.2,scale=320:-2,"
+                        "select='gt(scene,0.25)',showinfo",
+                        "-an", "-f", "null", "-",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=1800,
+                )
 
-        # Cria candidatos com duração de 15 segundos próximos às mudanças.
-        candidatos = []
-        for tempo in tempos:
-            inicio = max(0.0, min(tempo, duracao_total - 15.0))
-            if all(abs(inicio - existente) >= 8 for existente in candidatos):
-                candidatos.append(inicio)
+                tempos = [0.0]
 
-        # Limita a quantidade para não sobrecarregar o servidor.
-        candidatos = candidatos[:5]
-        if not candidatos:
-            candidatos = [0.0]
+                for linha in deteccao.stderr.splitlines():
+                    achado = re.search(
+                        r"pts_time:([0-9.]+)", linha
+                    )
+                    if achado:
+                        tempo = float(achado.group(1))
+                        if 0 < tempo < duracao:
+                            tempos.append(tempo)
 
-        # Monta um vídeo com os candidatos encontrados.
-        entradas = []
-        filtros = []
-        for indice, inicio in enumerate(candidatos):
-            entradas.extend(["-ss", f"{inicio:.2f}", "-i", origem])
-            filtros.append(
-                f"[{indice}:v]scale=720:1280:"
-                "force_original_aspect_ratio=increase,"
-                f"crop=720:1280,setsar=1,setpts=PTS-STARTPTS[v{indice}]"
-            )
+                candidatos = []
 
-        # Junta os segmentos em um único arquivo vertical.
-        filtros.append(
-            "".join(f"[v{i}]" for i in range(len(candidatos)))
-            + f"concat=n={len(candidatos)}:v=1:a=0[outv]"
-        )
+                for tempo in sorted(set(tempos)):
+                    inicio = max(0.0, min(tempo, duracao - 15.0))
+                    if all(
+                        abs(inicio - outro) >= 8
+                        for outro in candidatos
+                    ):
+                        candidatos.append(inicio)
 
-        comando = [
-            ffmpeg, "-y", *entradas,
-            "-filter_complex", ";".join(filtros),
-            "-map", "[outv]",
-            "-an",
-            "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-crf", "30",
-            "-t", "60",
-            "-movflags", "+faststart",
-            saida
-        ]
+                    if len(candidatos) >= 4:
+                        break
 
-        subprocess.run(
-            comando,
-            capture_output=True,
-            text=True,
-            timeout=240,
-            check=True
-        )
+                if not candidatos:
+                    candidatos = [0.0]
 
-        if not os.path.exists(saida) or os.path.getsize(saida) == 0:
-            raise RuntimeError("O FFmpeg não gerou um vídeo válido.")
+                with lock_tarefas_shorts:
+                    tarefas_shorts[task_id].update({
+                        "mensagem": "Gerando o vídeo vertical.",
+                        "progresso": 60,
+                    })
 
-        resposta = send_file(
-            saida,
-            mimetype="video/mp4",
-            as_attachment=True,
-            download_name="short_automatico.mp4"
-        )
-        resposta.call_on_close(
-            lambda: shutil.rmtree(pasta, ignore_errors=True)
-        )
-        return resposta
+                entradas = []
+                filtros = []
 
-    except subprocess.TimeoutExpired:
-        shutil.rmtree(pasta, ignore_errors=True)
+                for i, inicio in enumerate(candidatos):
+                    entradas.extend([
+                        "-ss", f"{inicio:.2f}",
+                        "-i", origem,
+                    ])
+                    filtros.append(
+                        f"[{i}:v]scale=720:1280:"
+                        "force_original_aspect_ratio=increase,"
+                        f"crop=720:1280,setsar=1,"
+                        f"setpts=PTS-STARTPTS[v{i}]"
+                    )
+
+                filtros.append(
+                    "".join(
+                        f"[v{i}]" for i in range(len(candidatos))
+                    )
+                    + f"concat=n={len(candidatos)}:v=1:a=0[outv]"
+                )
+
+                subprocess.run(
+                    [
+                        ffmpeg, "-y", *entradas,
+                        "-filter_complex", ";".join(filtros),
+                        "-map", "[outv]",
+                        "-an", "-c:v", "libx264",
+                        "-preset", "ultrafast",
+                        "-crf", "30", "-t", "60",
+                        "-movflags", "+faststart",
+                        saida,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=900,
+                    check=True,
+                )
+
+                if not os.path.exists(saida) or os.path.getsize(saida) == 0:
+                    raise RuntimeError("O vídeo final não foi gerado.")
+
+                with lock_tarefas_shorts:
+                    tarefas_shorts[task_id].update({
+                        "status": "concluido",
+                        "mensagem": "Short gerado.",
+                        "progresso": 100,
+                        "download_url": (
+                            "/api/shorts/download/" + task_id
+                        ),
+                    })
+
+            except Exception as erro:
+                app.logger.exception(
+                    "Falha na tarefa de Shorts %s", task_id
+                )
+                with lock_tarefas_shorts:
+                    tarefas_shorts[task_id].update({
+                        "status": "erro",
+                        "mensagem": str(erro)[:300],
+                    })
+
+        threading.Thread(
+            target=processar,
+            daemon=True,
+        ).start()
+
         return jsonify({
-            "erro": "A análise demorou demais para o servidor gratuito."
-        }), 504
+            "task_id": task_id,
+            "status": "aguardando",
+            "mensagem": "Upload recebido; processamento iniciado.",
+            "status_url": "/api/shorts/status/" + task_id,
+        }), 202
 
     except Exception:
-        app.logger.exception("Falha ao detectar cenas e gerar o Short.")
+        app.logger.exception("Falha ao receber o vídeo")
         shutil.rmtree(pasta, ignore_errors=True)
         return jsonify({
-            "erro": "Não foi possível gerar o vídeo. Consulte os logs do Render."
+            "erro": "Não foi possível receber o vídeo."
         }), 500
+
+
+@app.route("/api/shorts/download/<task_id>", methods=["GET"])
+def baixar_short(task_id):
+    from flask import jsonify, send_file
+
+    with lock_tarefas_shorts:
+        tarefa = tarefas_shorts.get(task_id)
+
+        if not tarefa or tarefa.get("status") != "concluido":
+            return jsonify({
+                "erro": "O Short ainda não está pronto."
+            }), 404
+
+        caminho = tarefa.get("saida")
+
+    if not caminho or not os.path.isfile(caminho):
+        return jsonify({
+            "erro": "O arquivo não está mais disponível."
+        }), 404
+
+    return send_file(
+        caminho,
+        mimetype="video/mp4",
+        as_attachment=True,
+        download_name="short_automatico.mp4",
+    )
+
 # Controle temporário dos processamentos em segundo plano.
 import threading
 import uuid
