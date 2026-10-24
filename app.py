@@ -1441,6 +1441,7 @@ import uuid
 tarefas_shorts = {}
 lock_tarefas_shorts = threading.Lock()
 
+
 @app.route("/api/shorts/status/<task_id>", methods=["GET"])
 def status_short(task_id):
     with lock_tarefas_shorts:
@@ -1451,7 +1452,17 @@ def status_short(task_id):
                 "erro": "Processamento não encontrado."
             }), 404
 
-        return jsonify(tarefa), 200
+        resposta = {
+            "status": tarefa.get("status", "aguardando"),
+            "mensagem": tarefa.get("mensagem", ""),
+            "progresso": tarefa.get("progresso", 0),
+        }
+
+        if tarefa.get("status") == "concluido":
+            resposta["download_url"] = tarefa.get("download_url")
+
+        return jsonify(resposta), 200
+
 @app.route("/api/diagnostico-rotas", methods=["GET"])
 def diagnostico_rotas():
     regras = sorted(
