@@ -1352,6 +1352,24 @@ def processar_upload_short():
         return jsonify({
             "erro": "Não foi possível gerar o vídeo. Consulte os logs do Render."
         }), 500
+# Controle temporário dos processamentos em segundo plano.
+import threading
+import uuid
+
+tarefas_shorts = {}
+lock_tarefas_shorts = threading.Lock()
+
+@app.route("/api/shorts/status/<task_id>", methods=["GET"])
+def status_short(task_id):
+    with lock_tarefas_shorts:
+        tarefa = tarefas_shorts.get(task_id)
+
+        if not tarefa:
+            return jsonify({
+                "erro": "Processamento não encontrado."
+            }), 404
+
+        return jsonify(tarefa), 200
 @app.route("/api/diagnostico-rotas", methods=["GET"])
 def diagnostico_rotas():
     regras = sorted(
