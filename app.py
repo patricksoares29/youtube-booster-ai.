@@ -1379,15 +1379,13 @@ def processar_upload_short():
                         f"asetpts=PTS-STARTPTS[a{i}]"
                     )
 
-                entradas_video = "".join(
-                    f"[v{i}]" for i in range(len(candidatos))
-                )
-                entradas_audio = "".join(
-                    f"[a{i}]" for i in range(len(candidatos))
+                entradas_concat = "".join(
+                    f"[v{i}][a{i}]"
+                    for i in range(len(candidatos))
                 )
 
                 filtros.append(
-                    entradas_video + entradas_audio
+                    entradas_concat
                     + f"concat=n={len(candidatos)}:v=1:a=1[outv][outa]"
                 )
 
