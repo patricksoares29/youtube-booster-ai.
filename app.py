@@ -1255,13 +1255,13 @@ def processar_upload_short():
                 "-hide_banner",
                 "-i", origem,
                 "-vf",
-                "fps=2,scale=640:-2,select='gt(scene,0.30)',showinfo",
+                "fps=0.2,scale=320:-2,select='gt(scene,0.25)',showinfo",
                 "-an",
                 "-f", "null", "-"
             ],
             capture_output=True,
             text=True,
-            timeout=240
+            timeout=600
         )
 
 
