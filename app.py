@@ -1295,7 +1295,38 @@ def processar_upload_short():
 
                 tempos = [0.0]
 
+                # 1. Momentos de mudança de cena
                 for linha in deteccao.stderr.splitlines():
+                    achado = re.search(
+                        r"pts_time:([0-9.]+)", linha
+                    )
+                    if achado:
+                        tempo = float(achado.group(1))
+                        if 0 < tempo < duracao:
+                            tempos.append(tempo)
+
+                # 2. Detectar picos de áudio para localizar
+                # possíveis tiros, explosões e combates.
+                audio_picos = subprocess.run(
+                    [
+                        ffmpeg,
+                        "-hide_banner",
+                        "-i", origem,
+                        "-vn",
+                        "-af",
+                        "aresample=8000,"
+                        "asetnsamples=n=8000:p=0,"
+                        "astats=metadata=1:reset=1,"
+                        "ametadata=print:"
+                        "key=lavfi.astats.Overall.Peak_level",
+                        "-f", "null", "-"
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=1800,
+                )
+
+                for linha in audio_picos.stderr.splitlines():
                     achado = re.search(
                         r"pts_time:([0-9.]+)", linha
                     )
