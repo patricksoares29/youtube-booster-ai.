@@ -1326,6 +1326,7 @@ def processar_upload_short():
                         "progresso": 60,
                     })
 
+
                 entradas = []
                 filtros = []
 
@@ -1334,18 +1335,29 @@ def processar_upload_short():
                         "-ss", f"{inicio:.2f}",
                         "-i", origem,
                     ])
+
                     filtros.append(
                         f"[{i}:v]scale=720:1280:"
                         "force_original_aspect_ratio=increase,"
-                        f"crop=720:1280,setsar=1,"
+                        "crop=720:1280,setsar=1,"
                         f"setpts=PTS-STARTPTS[v{i}]"
                     )
 
-                filtros.append(
-                    "".join(
-                        f"[v{i}]" for i in range(len(candidatos))
+                    filtros.append(
+                        f"[{i}:a]aresample=48000,"
+                        f"asetpts=PTS-STARTPTS[a{i}]"
                     )
-                    + f"concat=n={len(candidatos)}:v=1:a=0[outv]"
+
+                entradas_video = "".join(
+                    f"[v{i}]" for i in range(len(candidatos))
+                )
+                entradas_audio = "".join(
+                    f"[a{i}]" for i in range(len(candidatos))
+                )
+
+                filtros.append(
+                    entradas_video + entradas_audio
+                    + f"concat=n={len(candidatos)}:v=1:a=1[outv][outa]"
                 )
 
                 subprocess.run(
@@ -1353,9 +1365,13 @@ def processar_upload_short():
                         ffmpeg, "-y", *entradas,
                         "-filter_complex", ";".join(filtros),
                         "-map", "[outv]",
-                        "-an", "-c:v", "libx264",
+                        "-map", "[outa]",
+                        "-c:v", "libx264",
                         "-preset", "ultrafast",
-                        "-crf", "30", "-t", "60",
+                        "-crf", "30",
+                        "-c:a", "aac",
+                        "-b:a", "128k",
+                        "-t", "60",
                         "-movflags", "+faststart",
                         saida,
                     ],
