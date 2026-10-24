@@ -1467,13 +1467,22 @@ document.getElementById("form-cortes-ia").addEventListener("submit", async funct
         status.textContent = "Short pronto! Abrindo o download...";
 
         const link = document.createElement("a");
-        link.href = base + download;
-        link.target = "_blank";
-        link.rel = "noopener";
+        link.href = new URL(download, base).href;
+        link.textContent = "⬇️ Baixar Short MP4";
         link.download = "short_automatico.mp4";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        link.style.display = "inline-block";
+        link.style.marginTop = "12px";
+        link.style.padding = "12px";
+        link.style.color = "#ffffff";
+        link.style.background = "#c62828";
+        link.style.borderRadius = "8px";
+
+        status.appendChild(document.createElement("br"));
+        status.appendChild(link);
+
+        status.textContent = "Short pronto! Clique no link abaixo para baixar.";
+        status.appendChild(document.createElement("br"));
+        status.appendChild(link);
 
         status.textContent = "Processamento concluído. Se o download não abriu, verifique a nova aba.";
         break;
