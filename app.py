@@ -1003,14 +1003,25 @@ def gerar_teste_short():
     import subprocess
     from urllib.parse import urlparse, parse_qs
 
-data = request.get_json(silent=True) or {}
-url = str(data.get("url", "")).strip()
-duracao = int(data.get("duracao", 60))
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
 
-if duracao not in (15, 30, 60):
-    return jsonify({
-        "erro": "Escolha uma duração de 15, 30 ou 60 segundos."
-    }), 400
+    try:
+        duracao = int(data.get("duracao", 60))
+    except (TypeError, ValueError):
+        return jsonify({
+            "erro": "Escolha uma duração de 15, 30 ou 60 segundos."
+        }), 400
+
+    if duracao not in (15, 30, 60):
+        return jsonify({
+            "erro": "Escolha uma duração de 15, 30 ou 60 segundos."
+        }), 400
+
+    if not url:
+        return jsonify({
+            "erro": "Informe o link do vídeo."
+        }), 400
 
 if not url:
     return jsonify({"erro": "Informe o link do vídeo."}), 400
