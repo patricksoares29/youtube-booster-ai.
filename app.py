@@ -1284,7 +1284,7 @@ def processar_upload_short():
                     [
                         ffmpeg, "-hide_banner", "-i", origem,
                         "-vf",
-                        "fps=0.2,scale=320:-2,"
+                        "scale=320:-2,fps=0.2,"
                         "select='gt(scene,0.25)',showinfo",
                         "-an", "-f", "null", "-",
                     ],
