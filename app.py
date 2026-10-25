@@ -1103,7 +1103,8 @@ def gerar_teste_short():
         saida = os.path.join(pasta, "short_15s.mp4")
         subprocess.run(
             [
-                ffmpeg, "-y", "-i", origem,  str(duracao),
+                ffmpeg, "-y", "-i", origem,
+                "-t", str(duracao),
                 "-vf",
                 "scale=720:1280:force_original_aspect_ratio=increase,"
                 "crop=720:1280",
