@@ -1003,16 +1003,17 @@ def gerar_teste_short():
     import subprocess
     from urllib.parse import urlparse, parse_qs
 
-    data = request.get_json(silent=True) or {}
-    url = str(data.get("url", "")).strip()
-    duracao = int(data.get("duracao", 60))
-    if duracao not in (15, 30, 60):
+data = request.get_json(silent=True) or {}
+url = str(data.get("url", "")).strip()
+duracao = int(data.get("duracao", 60))
+
+if duracao not in (15, 30, 60):
     return jsonify({
         "erro": "Escolha uma duração de 15, 30 ou 60 segundos."
     }), 400
 
-    if not url:
-        return jsonify({"erro": "Informe o link do vídeo."}), 400
+if not url:
+    return jsonify({"erro": "Informe o link do vídeo."}), 400
 
     # Aceita somente links conhecidos do YouTube.
     try:
@@ -1082,15 +1083,17 @@ def gerar_teste_short():
                 return jsonify({"erro": "FFmpeg não está disponível."}), 503
 
         # Extrai os primeiros 15 segundos para transcrição.
-        audio = os.path.join(pasta, "audio.wav")
-        subprocess.run(
-            [
-                ffmpeg, "-y", "-i", origem,
-                "-t", str(duracao),
-                "-vn", "-ac", "1", "-ar", "16000", audio
-            ],
-            check=True, capture_output=True, timeout=90
-        )
+audio = os.path.join(pasta, "audio.wav")
+subprocess.run(
+    [
+        ffmpeg, "-y", "-i", origem,
+        "-t", str(duracao),
+        "-vn", "-ac", "1", "-ar", "16000", audio
+    ],
+    check=True,
+    capture_output=True,
+    timeout=90
+)
 
         from faster_whisper import WhisperModel
         modelo = WhisperModel("tiny", device="cpu", compute_type="int8")
