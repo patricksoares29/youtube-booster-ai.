@@ -1351,7 +1351,7 @@ def processar_upload_short():
 
                         if -12 <= nivel_pico <= 0:
                             if 0 < tempo_audio < duracao:
-                                tempos.append(tempo_audio)
+                                tempos_audio.append(tempo_audio)
 
                         tempo_audio = None
 
