@@ -1083,17 +1083,17 @@ if not url:
                 return jsonify({"erro": "FFmpeg não está disponível."}), 503
 
         # Extrai os primeiros 15 segundos para transcrição.
-audio = os.path.join(pasta, "audio.wav")
-subprocess.run(
-    [
-        ffmpeg, "-y", "-i", origem,
-        "-t", str(duracao),
-        "-vn", "-ac", "1", "-ar", "16000", audio
-    ],
-    check=True,
-    capture_output=True,
-    timeout=90
-)
+        audio = os.path.join(pasta, "audio.wav")
+        subprocess.run(
+            [
+                ffmpeg, "-y", "-i", origem,
+                "-t", str(duracao),
+                "-vn", "-ac", "1", "-ar", "16000", audio
+            ],
+            check=True,
+            capture_output=True,
+            timeout=90
+        )
 
         from faster_whisper import WhisperModel
         modelo = WhisperModel("tiny", device="cpu", compute_type="int8")
