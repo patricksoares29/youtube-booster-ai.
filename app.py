@@ -1293,8 +1293,8 @@ def processar_upload_short():
                     timeout=1800,
                 )
 
-                tempos = [0.0]
-
+                tempos_cena = []
+                tempos_audio = []
                 # 1. Momentos de mudança de cena
                 for linha in deteccao.stderr.splitlines():
                     achado = re.search(
