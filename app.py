@@ -1100,7 +1100,7 @@ def gerar_teste_short():
         ).strip()
 
         # Gera um corte inicial de até 15 segundos.
-        saida = os.path.join(pasta, "short_15s.mp4")
+        saida = os.path.join(pasta, f"short_{duracao}s.mp4")
         subprocess.run(
             [
                 ffmpeg, "-y", "-i", origem,
@@ -1122,7 +1122,7 @@ def gerar_teste_short():
             saida,
             mimetype="video/mp4",
             as_attachment=True,
-            download_name=f"short_{video_id}_15s.mp4"
+            download_name=f"short_{video_id}_{duracao}s.mp4"
         )
 
     except subprocess.TimeoutExpired:
