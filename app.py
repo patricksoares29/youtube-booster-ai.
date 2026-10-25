@@ -1368,6 +1368,32 @@ def processar_upload_short():
                     if len(candidatos) >= 4:
                         break
 
+                # Prioriza momentos com picos de áudio e
+                # complementa com mudanças de cena.
+                eventos = (
+                    [(tempo, 2) for tempo in tempos_audio]
+                    + [(tempo, 1) for tempo in tempos_cena]
+                )
+
+                eventos.sort(key=lambda evento: evento[1], reverse=True)
+
+                candidatos = []
+
+                for tempo, prioridade in eventos:
+                    inicio = max(
+                        0.0,
+                        min(tempo, duracao - 15.0)
+                    )
+
+                    if all(
+                        abs(inicio - outro) >= 15
+                        for outro in candidatos
+                    ):
+                        candidatos.append(inicio)
+
+                    if len(candidatos) >= 4:
+                        break
+
                 if not candidatos:
                     candidatos = [0.0]
 
