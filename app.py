@@ -1303,7 +1303,7 @@ def processar_upload_short():
                     if achado:
                         tempo = float(achado.group(1))
                         if 0 < tempo < duracao:
-                            tempos.append(tempo)
+                            tempos_cena.append(tempo)
 
                 # 2. Detectar picos de áudio para localizar
                 # possíveis tiros, explosões e combates.
