@@ -1355,19 +1355,6 @@ def processar_upload_short():
 
                         tempo_audio = None
 
-                candidatos = []
-
-                for tempo in sorted(set(tempos)):
-                    inicio = max(0.0, min(tempo, duracao - 15.0))
-                    if all(
-                        abs(inicio - outro) >= 8
-                        for outro in candidatos
-                    ):
-                        candidatos.append(inicio)
-
-                    if len(candidatos) >= 4:
-                        break
-
                 # Prioriza momentos com picos de áudio e
                 # complementa com mudanças de cena.
                 eventos = (
