@@ -1326,14 +1326,34 @@ def processar_upload_short():
                     timeout=1800,
                 )
 
+                tempo_audio = None
+
                 for linha in audio_picos.stderr.splitlines():
-                    achado = re.search(
+                    achado_tempo = re.search(
                         r"pts_time:([0-9.]+)", linha
                     )
-                    if achado:
-                        tempo = float(achado.group(1))
-                        if 0 < tempo < duracao:
-                            tempos.append(tempo)
+
+                    if achado_tempo:
+                        tempo_audio = float(
+                            achado_tempo.group(1)
+                        )
+                        continue
+
+                    achado_pico = re.search(
+                        r"lavfi\.astats\.Overall\.Peak_level=(-?[0-9.]+)",
+                        linha
+                    )
+
+                    if achado_pico and tempo_audio is not None:
+                        nivel_pico = float(
+                            achado_pico.group(1)
+                        )
+
+                        if -12 <= nivel_pico <= 0:
+                            if 0 < tempo_audio < duracao:
+                                tempos.append(tempo_audio)
+
+                        tempo_audio = None
 
                 candidatos = []
 
